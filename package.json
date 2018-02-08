@@ -1,0 +1,40 @@
+{
+  "name": "worthwhile",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "gatsby develop",
+    "build": "gatsby build",
+    "serve": "gatsby serve",
+    "prettier":
+      "prettier --single-quote --trailing-comma all --write \"src/**/*.{ts,tsx}\""
+  },
+  "babel": {
+    "presets": ["env", "stage-0"]
+  },
+  "dependencies": {
+    "@types/react": "^16.0.36",
+    "@types/react-dom": "^16.0.3",
+    "@types/react-router-dom": "^4.2.3",
+    "babel-polyfill": "^6.26.0",
+    "common": "https://github.com/kalambo/common",
+    "common-client": "https://github.com/kalambo/common-client",
+    "elmnt": "^0.5.0",
+    "gatsby": "^1.9.183",
+    "gatsby-plugin-create-client-paths": "^1.0.4",
+    "gatsby-plugin-react-helmet": "^2.0.4",
+    "gatsby-plugin-react-next": "^1.0.8",
+    "gatsby-plugin-typescript": "^1.4.15",
+    "lodash.debounce": "^4.0.8",
+    "mishmash": "^0.6.0",
+    "moment": "^2.20.1",
+    "node-fetch": "^2.0.0",
+    "prettier": "^1.10.2",
+    "react-google-maps": "^9.4.5",
+    "react-helmet": "^5.2.0",
+    "react-router-dom": "^4.2.2",
+    "rgo": "^0.3.7",
+    "style-transform": "^0.1.9",
+    "typescript": "^2.7.1",
+    "whatwg-fetch": "^2.0.3"
+  }
+}
