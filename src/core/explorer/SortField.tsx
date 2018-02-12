@@ -4,24 +4,25 @@ import { enclose, methodWrap } from 'mishmash';
 
 import { colors, icons } from '../styles';
 
-export default enclose(() => ({ path, ...props }) => {
+export default enclose(() => {
   const methods = methodWrap();
-  return {
+  return ({ path, ...props }) => ({
     ...props,
     ...methods({
       onMouseMove: () => props.setActive({ type: 'sort', path }),
       onMouseLeave: () => props.setActive(null),
+      onClick: () => props.clickSort(path),
     }),
-  };
-})(({ sort, active, onMouseMove, onMouseLeave }) => (
+  });
+})(({ sort, active, activeSibling, onMouseMove, onMouseLeave, onClick }) => (
   <>
     {(sort || active) && (
       <Icon
-        {...icons[sort === 'asc' ? 'up' : sort === 'desc' ? 'down' : 'updown']}
+        {...icons[sort === 'asc' ? 'up' : sort === 'desc' ? 'down' : '']}
         style={{
           fontSize: sort ? 9 : 7,
-          background: active ? colors.blue : '#888',
-          color: 'white',
+          background: active || activeSibling ? colors.blue : '#aaa',
+          color: colors.white,
           borderRadius: 10,
           padding: sort ? 1 : 2,
           position: 'absolute',
@@ -34,6 +35,7 @@ export default enclose(() => ({ path, ...props }) => {
     <div
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
+      onClick={onClick}
       style={{
         position: 'absolute',
         top: -11,

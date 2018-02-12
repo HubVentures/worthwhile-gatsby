@@ -1,7 +1,10 @@
 export const initialQuery = [
   {
     name: 'ww_people',
+    filter: ['firstname', 'Jon'],
     sort: ['firstname', '-lastname'],
+    start: 0,
+    end: 9,
     fields: [
       'firstname',
       'lastname',
@@ -14,12 +17,12 @@ export const initialQuery = [
           'disability',
         ],
       },
-      'lastname',
+      'email',
       {
         name: 'equalopps',
         fields: ['gender'],
       },
-      'email',
+      'lastname',
     ],
   },
   {

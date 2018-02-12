@@ -1,10 +1,12 @@
 import * as React from 'react';
-import { Txt } from 'elmnt';
-import { compose, pure, logChanges } from 'mishmash';
+import { Div, Txt } from 'elmnt';
+import { pure } from 'mishmash';
 
 import { colors } from '../styles';
 
 import AddField from './AddField';
+import FilterField from './FilterField';
+import PageField from './PageField';
 import RemoveField from './RemoveField';
 import SortField from './SortField';
 
@@ -14,24 +16,32 @@ const textStyle = {
   color: colors.black,
 };
 
-export default compose(pure, logChanges('cell'))(
+export default pure(
   ({
     name,
     type,
     span,
     path,
+    filter,
     sort,
     last,
-    i,
-    j,
-    rows,
-    row,
+    start,
+    end,
+    rowSpan,
     alt,
+    updateFilter,
+    clickSort,
+    updatePaging,
+    clickAdd,
+    clickRemove,
+    focused,
     isPathAdd,
     isLastPathAdd,
     isPathSort,
     isSiblingSort,
     isPathRemove,
+    isPathPaging,
+    isPathFilter,
     setActive,
     color,
   }) => (
@@ -46,7 +56,7 @@ export default compose(pure, logChanges('cell'))(
             : '#f6f6f6',
       }}
       colSpan={span || 1}
-      rowSpan={span ? 1 : rows.length - i}
+      rowSpan={rowSpan}
     >
       <div
         style={{
@@ -90,40 +100,42 @@ export default compose(pure, logChanges('cell'))(
               style={{
                 position: 'absolute',
                 top: 0,
+                ...(name ? { width: 1 } : { right: 0 }),
                 bottom: 0,
                 left: 0,
-                width: 1,
-                zIndex: 10,
+                zIndex: name ? 20 : 5,
               }}
             >
               <AddField
+                wide={!name}
                 type={type}
                 path={path}
+                clickAdd={clickAdd}
                 active={isPathAdd}
                 setActive={setActive}
               />
             </div>
           )}
-        {last &&
-          (name !== '#2' || (i === 0 && j === row.length - 1)) && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                right: 0,
-                width: 1,
-                zIndex: 10,
-              }}
-            >
-              <AddField
-                type={type}
-                path={last}
-                active={isLastPathAdd}
-                setActive={setActive}
-              />
-            </div>
-          )}
+        {last && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 1,
+              zIndex: 20,
+            }}
+          >
+            <AddField
+              type={type}
+              path={last}
+              clickAdd={clickAdd}
+              active={isLastPathAdd}
+              setActive={setActive}
+            />
+          </div>
+        )}
         {isSiblingSort && (
           <div
             style={{
@@ -137,7 +149,8 @@ export default compose(pure, logChanges('cell'))(
             }}
           />
         )}
-        {!span &&
+        {name &&
+          !span &&
           !name.startsWith('#') && (
             <div
               style={{
@@ -152,46 +165,77 @@ export default compose(pure, logChanges('cell'))(
               <SortField
                 sort={sort}
                 path={path}
+                clickSort={clickSort}
                 active={isPathSort}
+                activeSibling={isSiblingSort}
                 setActive={setActive}
               />
             </div>
           )}
-        {!name.startsWith('#') && (
-          <div
+        {name &&
+          !name.startsWith('#') && (
+            <div
+              style={{
+                position: 'absolute',
+                ...(span
+                  ? { top: 0, height: 1 }
+                  : { height: '50%', bottom: 0 }),
+                left: 0,
+                right: 0,
+                zIndex: span ? 4 : 5,
+              }}
+            >
+              <RemoveField
+                relation={span}
+                path={path}
+                clickRemove={clickRemove}
+                active={isPathRemove}
+                setActive={setActive}
+              />
+            </div>
+          )}
+      </div>
+      {name === '#1' && (
+        <PageField
+          start={start}
+          end={end}
+          path={path}
+          updatePaging={updatePaging}
+          active={isPathPaging}
+          focused={isPathPaging && focused}
+          setActive={setActive}
+        />
+      )}
+      {!name.startsWith('#') && (
+        <Div style={{ spacing: 15, layout: 'bar' }}>
+          <Txt
             style={{
-              position: 'absolute',
-              ...(span ? { top: 0 } : { height: '50%' }),
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: span ? 4 : 5,
+              ...textStyle,
+              fontWeight: 'bold',
+              color,
+              cursor: 'default',
+              position: 'relative',
+              userSelect: 'none',
+              MozUserSelect: 'none',
+              WebkitUserSelect: 'none',
+              msUserSelect: 'none',
             }}
           >
-            <RemoveField
-              relation={span}
+            {name}
+          </Txt>
+          {span && (
+            <FilterField
+              type={type}
+              filter={filter}
               path={path}
-              active={isPathRemove}
+              updateFilter={updateFilter}
+              active={isPathFilter}
+              focused={isPathFilter && focused}
               setActive={setActive}
             />
-          </div>
-        )}
-      </div>
-      <Txt
-        style={{
-          ...textStyle,
-          fontWeight: 'bold',
-          color,
-          cursor: 'default',
-          position: 'relative',
-          userSelect: 'none',
-          MozUserSelect: 'none',
-          WebkitUserSelect: 'none',
-          msUserSelect: 'none',
-        }}
-      >
-        {name.startsWith('#') ? null : name}
-      </Txt>
+          )}
+        </Div>
+      )}
     </td>
   ),
 );
