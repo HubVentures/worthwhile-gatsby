@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Icon, Input } from 'elmnt';
-import { enclose, methodWrap, Outside } from 'mishmash';
+import { compose, context, enclose, methodWrap, Outside } from 'mishmash';
 
 import { colors, icons } from '../styles';
 
@@ -11,71 +11,95 @@ const textStyle = {
   fontWeight: 'bold' as 'bold',
 };
 
-export default enclose(
-  ({ onProps, setState }) => {
-    let inputElem1;
-    const setInputElem1 = e => (inputElem1 = e);
-    let inputElem2;
-    const setInputElem2 = e => (inputElem2 = e);
-    const onChange1 = v => setState({ value1: v });
-    const onChange2 = v => setState({ value2: v });
-    onProps(props => {
-      if (props && !props.focused) {
-        setState({ value1: props.start, value2: props.end });
-      }
-    });
-    const methods = methodWrap();
-    return ({ path, ...props }, { value1, value2 }) => {
-      const invalid = !value1 || (value2 && value1 >= value2);
-      return {
-        ...props,
-        value1,
-        value2,
-        onChange1,
-        onChange2,
-        invalid,
-        ...methods({
-          onMouseMove: () => props.setActive({ type: 'paging', path }),
-          onMouseLeave: () => props.setActive(null),
-          onClick: e => {
-            props.setActive({ type: 'paging', path }, true);
-            if (e.clientY - e.target.getBoundingClientRect().top <= 44) {
-              inputElem1 && inputElem1.focus();
-            } else {
-              inputElem2 && inputElem2.focus();
-            }
-          },
-          onClickOutside: e => {
-            if (props.focused) {
-              e.stopPropagation();
-              if (!invalid) {
-                props.updatePaging(path, value1, value2);
-                props.setActive(null, true);
-              }
-            }
-          },
-          onKeyDown: event => {
-            if (props.focused && event.keyCode === 13) {
-              if (!invalid) {
-                props.updatePaging(path, value1, value2);
-                props.setActive(null, true);
-                (document.activeElement as HTMLElement).blur();
-              }
-            }
-          },
-        }),
-        setInputElem1,
-        setInputElem2,
+export default compose(
+  context('store'),
+  enclose(
+    ({ initialProps, onProps, setState }) => {
+      let inputElem1;
+      const setInputElem1 = e => (inputElem1 = e);
+      let inputElem2;
+      const setInputElem2 = e => (inputElem2 = e);
+      let path;
+      let unlistens;
+      const update = props => {
+        if (props) {
+          if (props.path !== path) {
+            path = props.path;
+            unlistens && unlistens.forEach(u => u());
+            unlistens = [
+              props.store.listen(`${path}_start`, (start = null) =>
+                setState({ start }),
+              ),
+              props.store.listen(`${path}_end`, (end = null) =>
+                setState({ end }),
+              ),
+            ];
+          }
+          if (props.live && !props.focused) {
+            props.store.set(`${path}_start`, props.start);
+            props.store.set(`${path}_end`, props.end);
+          }
+        } else {
+          unlistens.forEach(u => u());
+        }
       };
-    };
-  },
-  props => ({ value1: props.start, value2: props.end }),
+      update(initialProps);
+      onProps(update);
+      const methods = methodWrap();
+      return (props, { start, end }) => {
+        const invalid = !start || (end && start >= end);
+        return {
+          ...props,
+          start,
+          end,
+          invalid,
+          ...methods({
+            onChangeStart: v => props.store.set(`${path}_start`, v),
+            onChangeEnd: v => props.store.set(`${path}_end`, v),
+            onMouseMove: () =>
+              props.setActive({ type: 'paging', path: props.path }),
+            onMouseLeave: () => props.setActive(null),
+            onClick: e => {
+              props.setActive({ type: 'paging', path: props.path }, true);
+              if (e.clientY - e.target.getBoundingClientRect().top <= 44) {
+                inputElem1 && inputElem1.focus();
+              } else {
+                inputElem2 && inputElem2.focus();
+              }
+            },
+            onClickOutside: e => {
+              if (props.focused) {
+                e.stopPropagation();
+                if (!invalid) {
+                  props.updatePaging(props.path, start, end);
+                  props.setActive(null, true);
+                }
+              }
+            },
+            onKeyDown: event => {
+              if (props.focused && event.keyCode === 13) {
+                if (!invalid) {
+                  props.updatePaging(props.path, start, end);
+                  props.setActive(null, true);
+                  (document.activeElement as HTMLElement).blur();
+                }
+              }
+            },
+          }),
+          setInputElem1,
+          setInputElem2,
+        };
+      };
+    },
+    { start: null as null | number, end: null as null | number },
+  ),
 )(
   ({
-    value1,
-    onChange1,
-    value2,
-    onChange2,
+    live,
+    start,
+    end,
+    onChangeStart,
+    onChangeEnd,
     invalid,
     active,
     focused,
@@ -86,18 +110,22 @@ export default enclose(
     onKeyDown,
     setInputElem1,
     setInputElem2,
+    noLeft,
   }) => (
     <>
       <Outside
         onClickOutside={onClickOutside}
         onKeyDown={onKeyDown}
-        style={{ padding: '5px 4px 4px 5px' }}
+        style={{
+          padding: '5px 4px 4px 5px',
+          ...(noLeft ? { paddingLeft: 3 } : {}),
+        }}
       >
         <div style={{ position: 'relative', zIndex: focused ? 25 : 12 }}>
           <Input
             type="int"
-            value={value1}
-            onChange={onChange1}
+            value={start}
+            onChange={onChangeStart}
             style={{
               ...textStyle,
               color: focused
@@ -127,8 +155,8 @@ export default enclose(
           />
           <Input
             type="int"
-            value={value2}
-            onChange={onChange2}
+            value={end}
+            onChange={onChangeEnd}
             style={{
               ...textStyle,
               color: focused
@@ -146,23 +174,24 @@ export default enclose(
           />
         </div>
       </Outside>
-      {!focused && (
-        <div
-          onMouseMove={onMouseMove}
-          onMouseLeave={onMouseLeave}
-          onClick={onClick}
-          style={{
-            position: 'absolute',
-            top: -11,
-            right: 4,
-            bottom: -13,
-            left: 5,
-            zIndex: 12,
-            cursor: 'pointer',
-            // background: 'rgba(0,0,255,0.1)',
-          }}
-        />
-      )}
+      {live &&
+        !focused && (
+          <div
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+            onClick={onClick}
+            style={{
+              position: 'absolute',
+              top: -11,
+              right: 4,
+              bottom: -13,
+              left: 5,
+              zIndex: 12,
+              cursor: 'pointer',
+              // background: 'rgba(0,0,255,0.1)',
+            }}
+          />
+        )}
     </>
   ),
 );

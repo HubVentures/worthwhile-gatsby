@@ -34,6 +34,7 @@ export const fieldToRows = (
               path: newPath,
               start: (f.start || 0) + 1,
               end: f.end === undefined ? f.end : f.end + 1,
+              noLeft: i === 0 && !path,
             },
             {
               name: f.name,
@@ -44,11 +45,12 @@ export const fieldToRows = (
             },
             {
               name: '#2',
-              type: newType,
+              type: type,
               path: `${newPath}.${
                 newRows[0].filter(d => !d.name.startsWith('#')).length
               }`,
               last: i === fields.length - 1 && nextPath,
+              noRight: i === fields.length - 1 && !path,
             },
           );
           newRows.forEach((r, j) => {
@@ -59,27 +61,43 @@ export const fieldToRows = (
         [[]],
       );
 
-export const dataToRows = (fields, data, first = true, last = true) => {
+export const dataToRows = (
+  fields,
+  data,
+  initial = true,
+  first = true,
+  last = true,
+) => {
   const dataArray = Array.isArray(data) ? data : [data];
-  if (dataArray.length === 0) dataArray.push(null);
+  if (dataArray.length === 0) dataArray.push(undefined);
   return dataArray.reduce((result, values, i) => {
-    const dataBlocks = fields.map(f => {
+    const dataBlocks = fields.map((f, j) => {
       if (typeof f === 'string') {
         return [
           [
             {
               field: f,
-              value: f.startsWith('#') ? i + 1 : values && values[f],
+              value:
+                values === undefined
+                  ? ''
+                  : f.startsWith('#') ? i + 1 : values && values[f],
               first: first && i === 0,
               last: last && i === dataArray.length - 1,
               span: 1,
+              noLeft: f === '#0',
+              noRight: f === '#3',
             },
           ],
         ];
       }
       return dataToRows(
-        ['#1', ...(f.fields.length === 0 ? [''] : f.fields), '#2'],
-        values && values[f.alias || f.name],
+        [
+          initial && j === 0 ? '#0' : '#1',
+          ...(f.fields.length === 0 ? [''] : f.fields),
+          initial && j === fields.length - 1 ? '#3' : '#2',
+        ],
+        values === null ? undefined : values && values[f.alias || f.name],
+        false,
         first && i === 0,
         last && i === dataArray.length - 1,
       );

@@ -31,7 +31,7 @@ export default enclose(() => {
           position: 'absolute',
           left: '50%',
           marginLeft: -6,
-          ...(relation ? { top: -4 } : { bottom: -4 }),
+          ...(relation ? { top: 1 } : { bottom: 1 }),
         }}
       />
     )}

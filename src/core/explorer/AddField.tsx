@@ -135,6 +135,8 @@ export default compose(
     active,
     onMouseMove,
     onMouseLeave,
+    noLeft,
+    noRight,
   }) => (
     <>
       {(active || isOpen) && (
@@ -160,7 +162,11 @@ export default compose(
               position: 'absolute',
               ...(wide
                 ? { left: '50%', marginLeft: -6, bottom: -4 }
-                : { top: '50%', left: -5, marginTop: -6 }),
+                : {
+                    top: '50%',
+                    left: noLeft ? -1 : noRight ? -9 : -5,
+                    marginTop: -6,
+                  }),
             }}
           />
         </>

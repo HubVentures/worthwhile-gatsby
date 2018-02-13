@@ -41,7 +41,7 @@ export const data = {
           gender: 'Male',
           person: [
             { firstname: 'Dave', lastname: 'Smith' },
-            // { firstname: 'William', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
           ],
           disability: false,
         },
@@ -67,6 +67,111 @@ export const data = {
       ],
       equalopps: [],
       email: 'susan.jones@gmail.com',
+    },
+    {
+      firstname: 'Dave',
+      lastname: 'Smith',
+      test: [
+        {
+          gender: 'Male',
+          person: [
+            { firstname: 'Dave', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
+          ],
+          disability: false,
+        },
+        {
+          gender: 'Female',
+          person: { firstname: 'Dave', lastname: 'Smith' },
+          disability: true,
+        },
+      ],
+      equalopps: [{ gender: 'Male' }, { gender: 'Male' }, { gender: 'Male' }],
+      email: 'dave.smith@gmail.com',
+    },
+    {
+      firstname: 'Dave',
+      lastname: 'Smith',
+      test: [
+        {
+          gender: 'Male',
+          person: [
+            { firstname: 'Dave', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
+          ],
+          disability: false,
+        },
+        {
+          gender: 'Female',
+          person: { firstname: 'Dave', lastname: 'Smith' },
+          disability: true,
+        },
+      ],
+      equalopps: [{ gender: 'Male' }, { gender: 'Male' }, { gender: 'Male' }],
+      email: 'dave.smith@gmail.com',
+    },
+    {
+      firstname: 'Dave',
+      lastname: 'Smith',
+      test: [
+        {
+          gender: 'Male',
+          person: [
+            { firstname: 'Dave', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
+          ],
+          disability: false,
+        },
+        {
+          gender: 'Female',
+          person: { firstname: 'Dave', lastname: 'Smith' },
+          disability: true,
+        },
+      ],
+      equalopps: [{ gender: 'Male' }, { gender: 'Male' }, { gender: 'Male' }],
+      email: 'dave.smith@gmail.com',
+    },
+    {
+      firstname: 'Dave',
+      lastname: 'Smith',
+      test: [
+        {
+          gender: 'Male',
+          person: [
+            { firstname: 'Dave', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
+          ],
+          disability: false,
+        },
+        {
+          gender: 'Female',
+          person: { firstname: 'Dave', lastname: 'Smith' },
+          disability: true,
+        },
+      ],
+      equalopps: [{ gender: 'Male' }, { gender: 'Male' }, { gender: 'Male' }],
+      email: 'dave.smith@gmail.com',
+    },
+    {
+      firstname: 'Dave',
+      lastname: 'Smith',
+      test: [
+        {
+          gender: 'Male',
+          person: [
+            { firstname: 'Dave', lastname: 'Smith' },
+            { firstname: 'William', lastname: 'Smith' },
+          ],
+          disability: false,
+        },
+        {
+          gender: 'Female',
+          person: { firstname: 'Dave', lastname: 'Smith' },
+          disability: true,
+        },
+      ],
+      equalopps: [{ gender: 'Male' }, { gender: 'Male' }, { gender: 'Male' }],
+      email: 'dave.smith@gmail.com',
     },
   ],
   ww_equalopps: [],

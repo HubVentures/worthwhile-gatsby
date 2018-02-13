@@ -1,29 +1,16 @@
 import * as React from 'react';
-import { Txt } from 'elmnt';
-import { branch, compose, enclose, render } from 'mishmash';
+import { branch, compose, context, enclose, render } from 'mishmash';
 import { Spinner } from 'common-client';
 import { root } from 'common';
 import { fieldIs } from 'rgo';
 
 import { colors } from '../styles';
 
-import HeaderCell from './HeaderCell';
+import Header from './Header';
 import { dataToRows, fieldToRows } from './mapping';
+import Table from './Table';
 
 import { data, initialQuery } from './test';
-
-const textStyle = {
-  fontFamily: 'Ubuntu, sans-serif',
-  fontSize: 12,
-  color: colors.black,
-};
-
-const parent = (path, depth = 1) =>
-  path &&
-  path
-    .split('.')
-    .slice(0, -depth)
-    .join('.');
 
 export default compose(
   enclose(
@@ -37,6 +24,29 @@ export default compose(
     ({ loading }) => loading,
     render(() => <Spinner style={{ color: colors.blue }} />),
   ),
+  enclose(() => {
+    const values = {};
+    const listeners = {};
+    const store = {
+      get: key => values[key],
+      set: (key, value) => {
+        if (value !== values[key]) {
+          values[key] = value;
+          listeners[key] && listeners[key].forEach(l => l(value));
+          console.log(values);
+        }
+      },
+      listen: (key, listener) => {
+        listener(values[key]);
+        listeners[key] = listeners[key] || [];
+        listeners[key].push(listener);
+        return () => listeners[key].splice(listeners[key].indexOf(listener), 1);
+      },
+      keys: () => Object.keys(values),
+    };
+    return props => ({ ...props, store });
+  }),
+  context('store', ({ store }) => store),
   enclose(
     ({ setState }) => {
       let query = initialQuery;
@@ -102,10 +112,11 @@ export default compose(
       };
       const clickAdd = (path, type, field) => {
         const splitPath = path.split('.');
-        const index = splitPath[splitPath.length - 1];
+        const index = parseInt(splitPath[splitPath.length - 1], 10);
         const parent = splitPath
           .slice(0, -1)
           .reduce((res, i) => res.fields[i], { fields: query });
+
         parent.fields.splice(
           index,
           0,
@@ -117,19 +128,48 @@ export default compose(
           fieldRows: fieldToRows({ fields: query }),
           dataRows: dataToRows(query, data),
         });
+
+        // const parentPath = splitPath.slice(0, -1).join('.');
+        // let i = index;
+        // while (i < parent.fields.length) {
+        //   initialProps.store.set(
+        //     `${parentPath}.${i + 1}_width`,
+        //     initialProps.store.get(`${parentPath}.${i}_width`),
+        //   );
+        //   if (typeof parent.fields[i + 1] === 'object') {
+        //     const subIndex = parent.fields[i + 1].fields.length;
+        //     initialProps.store.set(
+        //       `${parentPath}.${i + 1}.${subIndex}_width`,
+        //       initialProps.store.get(`${parentPath}.${i}.${subIndex}_width`),
+        //     );
+        //   }
+        //   i++;
+        // }
       };
       const clickRemove = path => {
         const splitPath = path.split('.');
-        const index = splitPath[splitPath.length - 1];
+        const index = parseInt(splitPath[splitPath.length - 1], 10);
         const parent = splitPath
           .slice(0, -1)
           .reduce((res, i) => res.fields[i], { fields: query });
+
+        // const parentPath = splitPath.slice(0, -1).join('.');
+        // let i = parent.fields.length;
+        // while (i >= index) {
+        //   initialProps.store.set(
+        //     `${parentPath}.${i}_width`,
+        //     initialProps.store.get(`${parentPath}.${i + 1}_width`),
+        //   );
+        //   i--;
+        // }
+
         parent.fields.splice(index, 1);
         setState({
           fieldRows: fieldToRows({ fields: query }),
           dataRows: dataToRows(query, data),
         });
       };
+      const setSize = size => setState({ size });
       return (props, state) => ({
         ...props,
         ...state,
@@ -138,32 +178,33 @@ export default compose(
         updatePaging,
         clickAdd,
         clickRemove,
+        setSize,
       });
     },
     () => ({
       fieldRows: fieldToRows({ fields: initialQuery }),
       dataRows: dataToRows(initialQuery, data),
+      size: {},
     }),
   ),
-  enclose(
-    ({ setState }) => {
-      const setActive = (active, focus = false) =>
-        setState(({ activeFocus }) => {
-          if (activeFocus && !focus) return;
-          return {
-            activeFocus: (active && focus) || false,
-            activeType: active && active.type,
-            activePath: active && active.path,
-          };
-        });
-      return (props, state) => ({ ...props, ...state, setActive });
-    },
-    {
-      activeFocus: false,
-      activeType: null as null | string,
-      activePath: null as null | string,
-    },
-  ),
+  enclose(() => {
+    let scrollElem;
+    const setScrollElem = e => (scrollElem = e);
+    let scrollerElem;
+    const setScrollerElem = e => (scrollerElem = e);
+    const setScroll = () =>
+      false &&
+      scrollElem &&
+      scrollerElem &&
+      (scrollElem.style.left = `-${scrollerElem.scrollLeft}px`);
+    return (props, state) => ({
+      ...props,
+      ...state,
+      setScrollElem,
+      setScrollerElem,
+      setScroll,
+    });
+  }),
 )(
   ({
     fieldRows,
@@ -173,106 +214,94 @@ export default compose(
     updatePaging,
     clickAdd,
     clickRemove,
-    activeFocus,
-    activeType,
-    activePath,
-    setActive,
+    size,
+    setSize,
   }) => (
-    <table style={{ margin: '50px' }}>
-      <thead style={{ borderRight: '1px solid #ccc' }}>
-        {fieldRows.map((row, i, rows) => (
-          <tr key={i}>
-            {row.map((d, j) => (
-              <HeaderCell
-                {...d}
-                rowSpan={d.span ? 1 : rows.length - i}
-                alt={
-                  (d.path.split('.').length + (name === '#2' ? 1 : 0)) % 2 === 0
-                }
-                updateFilter={updateFilter}
-                clickSort={clickSort}
-                updatePaging={updatePaging}
-                clickAdd={clickAdd}
-                clickRemove={clickRemove}
-                focused={activeFocus}
-                isPathAdd={activeType === 'add' && activePath === d.path}
-                isLastPathAdd={activeType === 'add' && activePath === d.last}
-                isPathSort={activeType === 'sort' && activePath === d.path}
-                isSiblingSort={
-                  activeType === 'sort' &&
-                  parent(activePath) === parent(d.path, d.name === '#2' ? 2 : 1)
-                }
-                isPathRemove={activeType === 'remove' && activePath === d.path}
-                isPathPaging={activeType === 'paging' && activePath === d.path}
-                isPathFilter={activeType === 'filter' && activePath === d.path}
-                setActive={setActive}
-                color={
-                  activeType === 'remove' &&
-                  (activePath === d.path || d.path.startsWith(activePath))
-                    ? colors.red
-                    : activeType === 'sort' &&
-                      (activePath === d.path || activePath === parent(d.path))
-                      ? colors.blue
-                      : colors.black
-                }
-                key={j}
-              />
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody
-        style={{ borderTop: '1px solid #ccc', borderBottom: '2px solid #ccc' }}
-      >
-        {dataRows.map((row, i) => (
-          <tr key={i}>
-            {row.map((d, j) => (
-              <td
-                style={{
-                  padding: '7px 10px',
-                  position: 'relative',
-                  // ...(d.field.startsWith('#') ? { padding: 7 } : {}),
-                  verticalAlign: 'top',
-                }}
-                rowSpan={d.span}
-                key={j}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: -1,
-                    bottom: -1,
-                    borderTop: '1px solid #ccc',
-                    borderRight:
-                      d.field === '#2' ? '2px solid #ccc' : '1px solid #ccc',
-                    borderBottom: '1px solid #ccc',
-                    borderLeft:
-                      d.field === '#1' ? '2px solid #ccc' : '1px solid #ccc',
-                  }}
+    <div style={{ padding: '50px', height: '100%' }}>
+      <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+        <div
+          style={{
+            position: 'relative',
+            height: size.height && size.height + 2,
+            maxHeight: '100%',
+            width: size.width && size.width + 4,
+            maxWidth: '100%',
+            overflow: 'scroll',
+            borderLeft: '2px solid #ccc',
+            borderRight: '2px solid #ccc',
+            borderBottom: '2px solid #ccc',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: size.width,
+              height: '100%',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 100,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ width: 100000 }}>
+                <Header
+                  fieldRows={fieldRows}
+                  updateFilter={updateFilter}
+                  clickSort={clickSort}
+                  updatePaging={updatePaging}
+                  clickAdd={clickAdd}
+                  clickRemove={clickRemove}
                 />
-                {
-                  <Txt
-                    style={{
-                      ...textStyle,
-                      ...(d.value === undefined ||
-                      d.value === null ||
-                      d.field.startsWith('#')
-                        ? { color: '#ccc' }
-                        : {}),
-                    }}
-                  >
-                    {d.value === undefined || d.value === null
-                      ? '-'
-                      : `${d.value}`}
-                  </Txt>
-                }
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+              </div>
+            </div>
+            <div
+              style={{
+                height: '100%',
+                paddingTop: 33 * fieldRows.length + 2,
+              }}
+            >
+              <div style={{ height: '100%', overflow: 'scroll' }}>
+                <div style={{ marginTop: -33 * fieldRows.length - 2 }}>
+                  <Table
+                    fieldRows={fieldRows}
+                    dataRows={dataRows}
+                    setSize={setSize}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   ),
 );
+
+// <div
+//               style={{
+//                 position: 'absolute',
+//                 top: 0,
+//                 right: 0,
+//                 bottom: 0,
+//                 width: 2,
+//                 background: '#ccc',
+//                 zIndex: 101,
+//               }}
+//             />
+//             <div
+//               style={{
+//                 position: 'absolute',
+//                 right: 0,
+//                 bottom: 0,
+//                 left: 0,
+//                 height: 2,
+//                 background: '#ccc',
+//                 zIndex: 101,
+//               }}
+//             />

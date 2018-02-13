@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Input } from 'elmnt';
-import { enclose, methodWrap, Outside } from 'mishmash';
+import { compose, context, enclose, methodWrap, Outside } from 'mishmash';
 import { getValueString, Obj, root } from 'common';
 import { parseFilter } from 'common-client';
 import { Field, fieldIs } from 'rgo';
@@ -28,60 +28,81 @@ const textStyle = {
   color: colors.black,
 };
 
-export default enclose(
-  ({ initialProps, onProps, setState }) => {
-    let inputElem;
-    const setInputElem = e => (inputElem = e);
-    let prevFilter = initialProps.filter;
-    onProps(props => {
-      if (props && !props.focused && props.filter !== prevFilter) {
-        setState({
-          text: printFilter(props.filter, root.rgo.schema[props.type]),
-        });
-      }
-    });
-    const methods = methodWrap();
-    return ({ path, ...props }, { text }) => {
-      const invalid = text && !prevFilter;
-      return {
-        ...props,
-        text,
-        invalid,
-        ...methods({
-          setText: text => {
-            prevFilter = parseFilter(text, props.type);
-            setState({ text });
-          },
-          onMouseMove: () => props.setActive({ type: 'filter', path }),
-          onMouseLeave: () => props.setActive(null),
-          onClick: () => {
-            props.setActive({ type: 'filter', path }, true);
-            inputElem && inputElem.focus();
-          },
-          onClickOutside: e => {
-            if (props.focused) {
-              e.stopPropagation();
-              if (!invalid) {
-                props.updateFilter(path, prevFilter);
-                props.setActive(null, true);
-              }
-            }
-          },
-          onKeyDown: event => {
-            if (props.focused && event.keyCode === 13 && !invalid) {
-              props.updateFilter(path, prevFilter);
-              props.setActive(null, true);
-              (document.activeElement as HTMLElement).blur();
-            }
-          },
-        }),
-        setInputElem,
+export default compose(
+  context('store'),
+  enclose(
+    ({ initialProps, onProps, setState }) => {
+      let inputElem;
+      const setInputElem = e => (inputElem = e);
+      let prevFilter;
+      let path;
+      let unlisten;
+      const update = props => {
+        if (props) {
+          if (props.path !== path) {
+            path = props.path;
+            unlisten && unlisten();
+            unlisten = props.store.listen(`${path}_filter`, text =>
+              setState({ text }),
+            );
+          }
+          if (props.live && !props.focused && props.filter !== prevFilter) {
+            prevFilter = props.filter;
+            const text = printFilter(props.filter, root.rgo.schema[props.type]);
+            props.store.set(`${path}_filter`, text);
+          }
+        } else {
+          unlisten();
+        }
       };
-    };
-  },
-  props => ({ text: printFilter(props.filter, root.rgo.schema[props.type]) }),
+      update(initialProps);
+      onProps(update);
+      const methods = methodWrap();
+      return (props, { text }) => {
+        const invalid = text && !prevFilter;
+        return {
+          ...props,
+          text,
+          invalid,
+          ...methods({
+            setText: text => {
+              prevFilter = parseFilter(text, props.type);
+              props.store.set(`${path}_filter`, text);
+            },
+            onMouseMove: () =>
+              props.setActive({ type: 'filter', path: props.path }),
+            onMouseLeave: () => props.setActive(null),
+            onClick: () => {
+              props.setActive({ type: 'filter', path: props.path }, true);
+              inputElem && inputElem.focus();
+            },
+            onClickOutside: e => {
+              if (props.focused) {
+                e.stopPropagation();
+                if (!invalid) {
+                  props.updateFilter(props.path, prevFilter);
+                  props.setActive(null, true);
+                }
+              }
+            },
+            onKeyDown: event => {
+              if (props.focused && event.keyCode === 13 && !invalid) {
+                props.updateFilter(props.path, prevFilter);
+                props.setActive(null, true);
+                (document.activeElement as HTMLElement).blur();
+              }
+            },
+          }),
+          setInputElem,
+        };
+      };
+    },
+    { text: '' },
+  ),
 )(
   ({
+    live,
+    path,
     text,
     invalid,
     setText,
@@ -140,22 +161,23 @@ export default enclose(
           />
         </Div>
       </Outside>
-      {!focused && (
-        <div
-          onMouseMove={onMouseMove}
-          onMouseLeave={onMouseLeave}
-          onClick={onClick}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            zIndex: 14,
-            cursor: 'pointer',
-          }}
-        />
-      )}
+      {live &&
+        !focused && (
+          <div
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+            onClick={onClick}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              zIndex: 14,
+              cursor: 'pointer',
+            }}
+          />
+        )}
     </div>
   ),
 );
