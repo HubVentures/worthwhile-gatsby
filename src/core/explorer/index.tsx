@@ -260,20 +260,20 @@ export default compose(
                 />
               </div>
             </div>
-            <div
-              style={{
-                height: '100%',
-                paddingTop: 33 * fieldRows.length + 2,
-              }}
-            >
-              <div style={{ height: '100%', overflow: 'scroll' }}>
-                <div style={{ marginTop: -33 * fieldRows.length - 2 }}>
-                  <Table
-                    fieldRows={fieldRows}
-                    dataRows={dataRows}
-                    setSize={setSize}
-                  />
-                </div>
+            <div style={{ height: '100%', overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  paddingRight: 50,
+                  marginRight: -50,
+                  overflow: 'scroll',
+                }}
+              >
+                <Table
+                  fieldRows={fieldRows}
+                  dataRows={dataRows}
+                  setSize={setSize}
+                />
               </div>
             </div>
           </div>
@@ -282,26 +282,3 @@ export default compose(
     </div>
   ),
 );
-
-// <div
-//               style={{
-//                 position: 'absolute',
-//                 top: 0,
-//                 right: 0,
-//                 bottom: 0,
-//                 width: 2,
-//                 background: '#ccc',
-//                 zIndex: 101,
-//               }}
-//             />
-//             <div
-//               style={{
-//                 position: 'absolute',
-//                 right: 0,
-//                 bottom: 0,
-//                 left: 0,
-//                 height: 2,
-//                 background: '#ccc',
-//                 zIndex: 101,
-//               }}
-//             />

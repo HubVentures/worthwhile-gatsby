@@ -105,7 +105,7 @@ const HeaderCellBuilder = live =>
             style={{
               position: 'absolute',
               top: 0,
-              right: -1,
+              right: noRight ? 0 : -1,
               bottom: span ? -1 : -2,
               left: 0,
             }}
@@ -166,7 +166,7 @@ const HeaderCellBuilder = live =>
                   position: 'absolute',
                   top: 0,
                   bottom: 0,
-                  right: noRight ? 2 : 0,
+                  right: noRight ? 1 : 0,
                   width: 1,
                   zIndex: 20,
                 }}

@@ -102,7 +102,6 @@ export default compose(
 )(
   ({
     live,
-    path,
     text,
     invalid,
     setText,

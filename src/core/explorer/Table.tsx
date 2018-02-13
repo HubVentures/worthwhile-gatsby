@@ -16,7 +16,7 @@ export default compose(
   pure,
   withSize((props, size) => props.setSize(size), 'setSizeElem'),
 )(({ fieldRows, dataRows, setSizeElem }) => (
-  <table style={{ tableLayout: 'fixed', overflow: 'hidden' }} ref={setSizeElem}>
+  <table style={{ tableLayout: 'fixed' }} ref={setSizeElem}>
     <thead>
       {fieldRows.map((row, i) => (
         <tr key={i}>
@@ -36,13 +36,14 @@ export default compose(
           {row.map((d, j) => (
             <td
               style={{
-                padding: 10,
-                ...(d.noLeft ? { paddingLeft: 8 } : {}),
-                ...(d.noRight ? { paddingRight: 9 } : {}),
+                paddingTop: 10,
+                paddingRight: d.noRight ? 9 : 10,
+                paddingBottom: 10,
+                paddingLeft: d.noLeft ? 8 : 10,
                 position: 'relative',
                 verticalAlign: 'top',
               }}
-              rowSpan={d.span}
+              rowSpan={d.span || 1}
               key={j}
             >
               <div
@@ -50,7 +51,7 @@ export default compose(
                   position: 'absolute',
                   top: 0,
                   left: 0,
-                  right: -1,
+                  right: d.noRight ? 0 : -1,
                   bottom: !d.last ? -1 : 0,
                   borderTop: '1px solid #ccc',
                   borderRight:

@@ -117,8 +117,10 @@ export default compose(
         onClickOutside={onClickOutside}
         onKeyDown={onKeyDown}
         style={{
-          padding: '5px 4px 4px 5px',
-          ...(noLeft ? { paddingLeft: 3 } : {}),
+          paddingTop: 5,
+          paddingRight: 4,
+          paddingBottom: 4,
+          paddingLeft: noLeft ? 3 : 5,
         }}
       >
         <div style={{ position: 'relative', zIndex: focused ? 25 : 12 }}>

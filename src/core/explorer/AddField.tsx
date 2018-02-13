@@ -161,7 +161,7 @@ export default compose(
               padding: 2,
               position: 'absolute',
               ...(wide
-                ? { left: '50%', marginLeft: -6, bottom: -4 }
+                ? { left: '50%', marginLeft: -6, bottom: 1 }
                 : {
                     top: '50%',
                     left: noLeft ? -1 : noRight ? -9 : -5,
@@ -178,8 +178,8 @@ export default compose(
         style={{
           position: 'absolute',
           top: -11,
-          left: -11,
-          right: -11,
+          left: noLeft ? 0 : -11,
+          right: noRight ? 0 : -11,
           bottom: -11,
           cursor: 'pointer',
           // background: 'rgba(0,255,0,0.1)',
