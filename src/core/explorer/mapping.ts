@@ -34,7 +34,7 @@ export const fieldToRows = (
               path: newPath,
               start: (f.start || 0) + 1,
               end: f.end === undefined ? f.end : f.end + 1,
-              noLeft: i === 0 && !path,
+              firstCol: i === 0 && !path,
             },
             {
               name: f.name,
@@ -50,7 +50,7 @@ export const fieldToRows = (
                 newRows[0].filter(d => !d.name.startsWith('#')).length
               }`,
               last: i === fields.length - 1 && nextPath,
-              noRight: i === fields.length - 1 && !path,
+              lastCol: i === fields.length - 1 && !path,
             },
           );
           newRows.forEach((r, j) => {

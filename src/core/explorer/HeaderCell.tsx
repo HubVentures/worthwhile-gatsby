@@ -63,8 +63,8 @@ const HeaderCellBuilder = live =>
       last,
       start,
       end,
-      noLeft,
-      noRight,
+      firstCol,
+      lastCol,
       rowSpan,
       alt,
       updateFilter,
@@ -78,6 +78,7 @@ const HeaderCellBuilder = live =>
       isPathSort,
       isSiblingSort,
       isPathRemove,
+      isChildRemove,
       isPathPaging,
       isPathFilter,
       setActive,
@@ -87,13 +88,19 @@ const HeaderCellBuilder = live =>
     }) => (
       <td
         style={{
-          padding: !name.startsWith('#') && '11px 10px 10px 10px',
           position: 'relative',
           verticalAlign: 'top',
-          background:
-            (path.split('.').length + (name === '#2' ? 1 : 0)) % 2 === 0
-              ? '#e5e5e5'
-              : '#f6f6f6',
+          background: alt ? '#e5e5e5' : '#f6f6f6',
+          paddingTop: span || name.startsWith('#') ? 9 : 10,
+          paddingRight: 10,
+          paddingBottom: 10,
+          paddingLeft: span ? 11 : 10,
+          borderTopWidth: span || name.startsWith('#') ? 2 : 1,
+          borderRightWidth: !lastCol && name === '#2' && 1,
+          borderBottomWidth: !span && 2,
+          borderLeftWidth: !firstCol && (name === '#1' ? 2 : !span && 1),
+          borderStyle: 'solid',
+          borderColor: '#ccc',
           ...(live && !span ? { width } : {}),
         }}
         colSpan={span || 1}
@@ -104,34 +111,20 @@ const HeaderCellBuilder = live =>
           <div
             style={{
               position: 'absolute',
-              top: 0,
-              right: noRight ? 0 : -1,
-              bottom: span ? -1 : -2,
-              left: 0,
+              top: span || name.startsWith('#') ? -2 : -1,
+              right: !lastCol && name === '#2' ? -2 : -1,
+              bottom: !span ? -2 : -1,
+              left: !firstCol && name === '#1' ? -2 : -1,
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                borderTopWidth: span || name.startsWith('#') ? 2 : 1,
-                borderRightWidth: !noRight && (name === '#2' && 2),
-                borderLeftWidth: !noLeft && (name === '#1' ? 2 : !span && 1),
-                borderStyle: 'solid',
-                borderColor: '#ccc',
-              }}
-            />
             {span && (
               <div
                 style={{
                   position: 'absolute',
                   top: 2,
                   right: 0,
-                  width: 1,
                   bottom: 1,
+                  width: 1,
                   background: alt ? '#e5e5e5' : '#f6f6f6',
                   zIndex: 1,
                 }}
@@ -145,7 +138,7 @@ const HeaderCellBuilder = live =>
                     top: 0,
                     ...(name ? { width: 1 } : { right: 0 }),
                     bottom: 0,
-                    left: noLeft ? 1 : 0,
+                    left: firstCol ? 2 : 0,
                     zIndex: name ? 20 : 5,
                   }}
                 >
@@ -156,7 +149,7 @@ const HeaderCellBuilder = live =>
                     clickAdd={clickAdd}
                     active={isPathAdd}
                     setActive={setActive}
-                    noLeft={noLeft}
+                    firstCol={firstCol}
                   />
                 </div>
               )}
@@ -166,7 +159,7 @@ const HeaderCellBuilder = live =>
                   position: 'absolute',
                   top: 0,
                   bottom: 0,
-                  right: noRight ? 1 : 0,
+                  right: lastCol ? 2 : 0,
                   width: 1,
                   zIndex: 20,
                 }}
@@ -177,7 +170,7 @@ const HeaderCellBuilder = live =>
                   clickAdd={clickAdd}
                   active={isLastPathAdd}
                   setActive={setActive}
-                  noRight={noRight}
+                  lastCol={lastCol}
                 />
               </div>
             )}
@@ -190,7 +183,7 @@ const HeaderCellBuilder = live =>
                   right: 0,
                   height: 3,
                   background: colors.blue,
-                  zIndex: 5,
+                  zIndex: 10,
                 }}
               />
             )}
@@ -204,7 +197,7 @@ const HeaderCellBuilder = live =>
                     left: 0,
                     right: 0,
                     height: '50%',
-                    zIndex: 5,
+                    zIndex: 10,
                   }}
                 >
                   <SortField
@@ -217,17 +210,34 @@ const HeaderCellBuilder = live =>
                   />
                 </div>
               )}
+            {!span &&
+              isChildRemove && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    height: 3,
+                    background: colors.red,
+                    zIndex: 1,
+                  }}
+                />
+              )}
             {name &&
               !name.startsWith('#') && (
                 <div
                   style={{
                     position: 'absolute',
                     ...(span
-                      ? { top: 0, height: 1 }
-                      : { height: '50%', bottom: 0 }),
-                    left: 0,
-                    right: 0,
-                    zIndex: span ? 4 : 5,
+                      ? {
+                          left: -10,
+                          right: -10,
+                          top: path.indexOf('.') === -1 ? -2 : -2,
+                          bottom: 6,
+                        }
+                      : { left: 0, right: 0, bottom: 0, height: '50%' }),
+                    zIndex: span ? 4 : 10,
                   }}
                 >
                   <RemoveField
@@ -251,7 +261,6 @@ const HeaderCellBuilder = live =>
             active={isPathPaging}
             focused={isPathPaging && focused}
             setActive={setActive}
-            noLeft={noLeft}
           />
         )}
         {!name.startsWith('#') && (

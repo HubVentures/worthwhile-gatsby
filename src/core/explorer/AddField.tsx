@@ -135,8 +135,8 @@ export default compose(
     active,
     onMouseMove,
     onMouseLeave,
-    noLeft,
-    noRight,
+    firstCol,
+    lastCol,
   }) => (
     <>
       {(active || isOpen) && (
@@ -164,7 +164,7 @@ export default compose(
                 ? { left: '50%', marginLeft: -6, bottom: 1 }
                 : {
                     top: '50%',
-                    left: noLeft ? -1 : noRight ? -9 : -5,
+                    left: firstCol ? 0 : lastCol ? -10 : -5,
                     marginTop: -6,
                   }),
             }}
@@ -177,10 +177,10 @@ export default compose(
         onMouseLeave={onMouseLeave}
         style={{
           position: 'absolute',
-          top: -11,
-          left: noLeft ? 0 : -11,
-          right: noRight ? 0 : -11,
-          bottom: -11,
+          top: -5,
+          left: wide ? 0 : firstCol ? -1 : -10,
+          right: wide ? 0 : lastCol ? -1 : -10,
+          bottom: 0,
           cursor: 'pointer',
           // background: 'rgba(0,255,0,0.1)',
         }}

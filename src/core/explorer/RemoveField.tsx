@@ -41,12 +41,12 @@ export default enclose(() => {
       onDoubleClick={onClick}
       style={{
         position: 'absolute',
-        top: relation ? -11 : 0,
-        left: relation ? -11 : 0,
-        bottom: relation ? -11 : -11,
-        right: relation ? -11 : 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
         cursor: 'pointer',
-        // background: 'rgba(0,0,255,0.1)',
+        // background: 'rgba(255,0,255,0.1)',
       }}
     />
   </>

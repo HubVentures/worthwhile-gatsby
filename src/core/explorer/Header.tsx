@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { compose, enclose, pure, logChanges } from 'mishmash';
+import { compose, enclose, pure } from 'mishmash';
 
 import { colors } from '../styles';
 
@@ -14,7 +14,6 @@ const parent = (path, depth = 1) =>
 
 export default compose(
   pure,
-  logChanges('header'),
   enclose(
     ({ setState }) => {
       const setActive = (active, focus = false) =>
@@ -51,8 +50,8 @@ export default compose(
     activePath,
     setActive,
   }) => (
-    <table>
-      <thead style={{ borderBottom: '2px solid #ccc' }}>
+    <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+      <thead>
         {fieldRows.map((row, i) => (
           <tr key={i}>
             {row.map(d => (
@@ -60,7 +59,8 @@ export default compose(
                 {...d}
                 rowSpan={d.span ? 1 : fieldRows.length - i}
                 alt={
-                  (d.path.split('.').length + (name === '#2' ? 1 : 0)) % 2 === 0
+                  (d.path.split('.').length + (d.name === '#2' ? 1 : 0)) % 2 ===
+                  0
                 }
                 updateFilter={updateFilter}
                 clickSort={clickSort}
@@ -76,6 +76,9 @@ export default compose(
                   parent(activePath) === parent(d.path, d.name === '#2' ? 2 : 1)
                 }
                 isPathRemove={activeType === 'remove' && activePath === d.path}
+                isChildRemove={
+                  activeType === 'remove' && d.path.startsWith(activePath)
+                }
                 isPathPaging={activeType === 'paging' && activePath === d.path}
                 isPathFilter={activeType === 'filter' && activePath === d.path}
                 setActive={setActive}

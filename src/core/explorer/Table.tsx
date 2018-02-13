@@ -16,7 +16,14 @@ export default compose(
   pure,
   withSize((props, size) => props.setSize(size), 'setSizeElem'),
 )(({ fieldRows, dataRows, setSizeElem }) => (
-  <table style={{ tableLayout: 'fixed' }} ref={setSizeElem}>
+  <table
+    style={{
+      borderCollapse: 'separate',
+      borderSpacing: 0,
+      tableLayout: 'fixed',
+    }}
+    ref={setSizeElem}
+  >
     <thead>
       {fieldRows.map((row, i) => (
         <tr key={i}>
@@ -36,33 +43,18 @@ export default compose(
           {row.map((d, j) => (
             <td
               style={{
-                paddingTop: 10,
-                paddingRight: d.noRight ? 9 : 10,
-                paddingBottom: 10,
-                paddingLeft: d.noLeft ? 8 : 10,
+                padding: 10,
+                borderTopWidth: !d.first && 1,
+                borderLeftWidth: !d.noLeft && (d.field === '#1' ? 2 : 1),
+                borderRightWidth: !d.noRight && d.field === '#2' && 1,
+                borderStyle: 'solid',
+                borderColor: '#ccc',
                 position: 'relative',
                 verticalAlign: 'top',
               }}
               rowSpan={d.span || 1}
               key={j}
             >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: d.noRight ? 0 : -1,
-                  bottom: !d.last ? -1 : 0,
-                  borderTop: '1px solid #ccc',
-                  borderRight:
-                    !d.noRight &&
-                    (d.field === '#2' ? '2px solid #ccc' : '1px solid #ccc'),
-                  borderBottom: !d.last && '1px solid #ccc',
-                  borderLeft:
-                    !d.noLeft &&
-                    (d.field === '#1' ? '2px solid #ccc' : '1px solid #ccc'),
-                }}
-              />
               <Txt
                 style={{
                   ...textStyle,

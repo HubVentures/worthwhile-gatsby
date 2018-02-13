@@ -114,52 +114,50 @@ export default compose(
     onKeyDown,
     setInputElem,
   }) => (
-    <div
+    <Outside
+      onClickOutside={onClickOutside}
       onKeyDown={onKeyDown}
-      style={{ position: 'relative', margin: -5, zIndex: 25 }}
+      style={{ position: 'relative', margin: -5 }}
     >
-      <Outside
-        onClickOutside={onClickOutside}
-        style={{ position: 'relative', zIndex: 14 }}
+      <Div
+        style={{
+          layout: 'bar',
+          background: focused
+            ? invalid ? colors.red : colors.blue
+            : active && 'rgba(0,0,0,0.1)',
+          minWidth: 50,
+          position: 'relative',
+          zIndex: focused ? 20 : 5,
+        }}
       >
-        <Div
-          style={{
-            layout: 'bar',
-            background: focused
-              ? invalid ? colors.red : colors.blue
-              : active && 'rgba(0,0,0,0.1)',
-            minWidth: 50,
-          }}
-        >
-          <div style={{ width: 20 }}>
-            <Icon
-              {...icons.filter}
-              style={{
-                fontSize: 10,
-                color: focused
-                  ? colors.white
-                  : active ? colors.blue : 'rgba(0,0,0,0.3)',
-                padding: 5,
-              }}
-            />
-          </div>
-          <Input
-            type="string"
-            value={text}
-            onChange={setText}
-            spellCheck={false}
+        <div style={{ width: 20 }}>
+          <Icon
+            {...icons.filter}
             style={{
-              ...textStyle,
-              fontWeight: 'bold',
+              fontSize: 10,
               color: focused
                 ? colors.white
                 : active ? colors.blue : 'rgba(0,0,0,0.3)',
-              padding: '5px 10px 5px 5px',
+              padding: 5,
             }}
-            ref={setInputElem}
           />
-        </Div>
-      </Outside>
+        </div>
+        <Input
+          type="string"
+          value={text}
+          onChange={setText}
+          spellCheck={false}
+          style={{
+            ...textStyle,
+            fontWeight: 'bold',
+            color: focused
+              ? colors.white
+              : active ? colors.blue : 'rgba(0,0,0,0.3)',
+            padding: '5px 10px 5px 5px',
+          }}
+          ref={setInputElem}
+        />
+      </Div>
       {live &&
         !focused && (
           <div
@@ -168,15 +166,16 @@ export default compose(
             onClick={onClick}
             style={{
               position: 'absolute',
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              zIndex: 14,
+              top: -11,
+              right: -5,
+              bottom: -6,
+              left: -5,
               cursor: 'pointer',
+              // background: 'rgba(255,0,0,0.1)',
+              zIndex: 5,
             }}
           />
         )}
-    </div>
+    </Outside>
   ),
 );

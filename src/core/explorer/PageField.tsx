@@ -110,71 +110,63 @@ export default compose(
     onKeyDown,
     setInputElem1,
     setInputElem2,
-    noLeft,
   }) => (
     <>
       <Outside
         onClickOutside={onClickOutside}
         onKeyDown={onKeyDown}
-        style={{
-          paddingTop: 5,
-          paddingRight: 4,
-          paddingBottom: 4,
-          paddingLeft: noLeft ? 3 : 5,
-        }}
+        style={{ position: 'relative', margin: -5, zIndex: focused ? 20 : 6 }}
       >
-        <div style={{ position: 'relative', zIndex: focused ? 25 : 12 }}>
-          <Input
-            type="int"
-            value={start}
-            onChange={onChangeStart}
-            style={{
-              ...textStyle,
-              color: focused
-                ? colors.white
-                : active ? colors.blue : 'rgba(0,0,0,0.3)',
-              padding: 5,
-              background: focused
+        <Input
+          type="int"
+          value={start}
+          onChange={onChangeStart}
+          style={{
+            ...textStyle,
+            color: focused
+              ? colors.white
+              : active ? colors.blue : 'rgba(0,0,0,0.3)',
+            padding: 5,
+            background: focused
+              ? invalid ? colors.red : colors.blue
+              : active && 'rgba(0,0,0,0.1)',
+            display: 'inline-block',
+            verticalAlign: 'top',
+            minWidth: 25,
+          }}
+          ref={setInputElem1}
+        />
+        <Icon
+          {...icons.down}
+          style={{
+            color:
+              focused || active
                 ? invalid ? colors.red : colors.blue
-                : active && 'rgba(0,0,0,0.1)',
-              display: 'inline-block',
-              verticalAlign: 'top',
-              minWidth: 30,
-            }}
-            ref={setInputElem1}
-          />
-          <Icon
-            {...icons.down}
-            style={{
-              color:
-                focused || active
-                  ? invalid ? colors.red : colors.blue
-                  : 'rgba(0,0,0,0.3)',
-              fontSize: 11,
-              padding: '0 5px',
-              minWidth: 30,
-            }}
-          />
-          <Input
-            type="int"
-            value={end}
-            onChange={onChangeEnd}
-            style={{
-              ...textStyle,
-              color: focused
-                ? colors.white
-                : active ? colors.blue : 'rgba(0,0,0,0.3)',
-              padding: 5,
-              background: focused
-                ? invalid ? colors.red : colors.blue
-                : active && 'rgba(0,0,0,0.1)',
-              display: 'inline-block',
-              verticalAlign: 'top',
-              minWidth: 30,
-            }}
-            ref={setInputElem2}
-          />
-        </div>
+                : 'rgba(0,0,0,0.3)',
+            fontSize: 11,
+            padding: '0 5px',
+            minWidth: 25,
+          }}
+        />
+        <Input
+          type="int"
+          value={end}
+          onChange={onChangeEnd}
+          style={{
+            ...textStyle,
+            color: focused
+              ? colors.white
+              : active ? colors.blue : 'rgba(0,0,0,0.3)',
+            padding: 5,
+            background: focused
+              ? invalid ? colors.red : colors.blue
+              : active && 'rgba(0,0,0,0.1)',
+            display: 'inline-block',
+            verticalAlign: 'top',
+            minWidth: 25,
+          }}
+          ref={setInputElem2}
+        />
       </Outside>
       {live &&
         !focused && (
@@ -184,13 +176,13 @@ export default compose(
             onClick={onClick}
             style={{
               position: 'absolute',
-              top: -11,
-              right: 4,
-              bottom: -13,
-              left: 5,
-              zIndex: 12,
+              top: -7,
+              right: 0,
+              bottom: -2,
+              left: -1,
+              zIndex: 6,
               cursor: 'pointer',
-              // background: 'rgba(0,0,255,0.1)',
+              // background: 'rgba(255,0,0,0.1)',
             }}
           />
         )}

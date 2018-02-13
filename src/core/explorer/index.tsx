@@ -33,7 +33,6 @@ export default compose(
         if (value !== values[key]) {
           values[key] = value;
           listeners[key] && listeners[key].forEach(l => l(value));
-          console.log(values);
         }
       },
       listen: (key, listener) => {
@@ -116,7 +115,6 @@ export default compose(
         const parent = splitPath
           .slice(0, -1)
           .reduce((res, i) => res.fields[i], { fields: query });
-
         parent.fields.splice(
           index,
           0,
@@ -128,23 +126,6 @@ export default compose(
           fieldRows: fieldToRows({ fields: query }),
           dataRows: dataToRows(query, data),
         });
-
-        // const parentPath = splitPath.slice(0, -1).join('.');
-        // let i = index;
-        // while (i < parent.fields.length) {
-        //   initialProps.store.set(
-        //     `${parentPath}.${i + 1}_width`,
-        //     initialProps.store.get(`${parentPath}.${i}_width`),
-        //   );
-        //   if (typeof parent.fields[i + 1] === 'object') {
-        //     const subIndex = parent.fields[i + 1].fields.length;
-        //     initialProps.store.set(
-        //       `${parentPath}.${i + 1}.${subIndex}_width`,
-        //       initialProps.store.get(`${parentPath}.${i}.${subIndex}_width`),
-        //     );
-        //   }
-        //   i++;
-        // }
       };
       const clickRemove = path => {
         const splitPath = path.split('.');
@@ -152,17 +133,6 @@ export default compose(
         const parent = splitPath
           .slice(0, -1)
           .reduce((res, i) => res.fields[i], { fields: query });
-
-        // const parentPath = splitPath.slice(0, -1).join('.');
-        // let i = parent.fields.length;
-        // while (i >= index) {
-        //   initialProps.store.set(
-        //     `${parentPath}.${i}_width`,
-        //     initialProps.store.get(`${parentPath}.${i + 1}_width`),
-        //   );
-        //   i--;
-        // }
-
         parent.fields.splice(index, 1);
         setState({
           fieldRows: fieldToRows({ fields: query }),
@@ -250,14 +220,16 @@ export default compose(
               }}
             >
               <div style={{ width: 100000 }}>
-                <Header
-                  fieldRows={fieldRows}
-                  updateFilter={updateFilter}
-                  clickSort={clickSort}
-                  updatePaging={updatePaging}
-                  clickAdd={clickAdd}
-                  clickRemove={clickRemove}
-                />
+                {true && (
+                  <Header
+                    fieldRows={fieldRows}
+                    updateFilter={updateFilter}
+                    clickSort={clickSort}
+                    updatePaging={updatePaging}
+                    clickAdd={clickAdd}
+                    clickRemove={clickRemove}
+                  />
+                )}
               </div>
             </div>
             <div style={{ height: '100%', overflow: 'hidden' }}>

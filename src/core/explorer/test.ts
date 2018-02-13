@@ -20,7 +20,8 @@ export const initialQuery = [
       'email',
       {
         name: 'equalopps',
-        fields: ['gender'],
+        // fields: ['gender'],
+        fields: [],
       },
       'lastname',
     ],
