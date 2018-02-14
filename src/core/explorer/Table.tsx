@@ -15,7 +15,7 @@ const textStyle = {
 export default compose(
   pure,
   withSize((props, size) => props.setSize(size), 'setSizeElem'),
-)(({ fieldRows, dataRows, setSizeElem }) => (
+)(({ types, fieldRows, dataRows, setSizeElem }) => (
   <table
     style={{
       borderCollapse: 'separate',
@@ -29,6 +29,7 @@ export default compose(
         <tr key={i}>
           {row.map(d => (
             <ShadowHeaderCell
+              types={types}
               {...d}
               rowSpan={d.span ? 1 : fieldRows.length - i}
               key={`${d.path}_${d.name}`}
@@ -45,12 +46,14 @@ export default compose(
               style={{
                 padding: 10,
                 borderTopWidth: !d.first && 1,
-                borderLeftWidth: !d.noLeft && (d.field === '#1' ? 2 : 1),
-                borderRightWidth: !d.noRight && d.field === '#2' && 1,
+                borderLeftWidth: !d.firstCol && (d.field === '#1' ? 2 : 1),
+                borderRightWidth: !d.lastCol && d.field === '#2' && 1,
                 borderStyle: 'solid',
                 borderColor: '#ccc',
                 position: 'relative',
                 verticalAlign: 'top',
+                maxWidth: 400,
+                background: d.empty ? '#fafafa' : 'white',
               }}
               rowSpan={d.span || 1}
               key={j}
@@ -65,7 +68,9 @@ export default compose(
                     : {}),
                 }}
               >
-                {d.value === undefined || d.value === null ? '-' : `${d.value}`}
+                {d.value === undefined
+                  ? ''
+                  : d.value === null ? '-' : `${d.value}`}
               </Txt>
             </td>
           ))}

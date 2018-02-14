@@ -39,6 +39,7 @@ export default compose(
   ),
 )(
   ({
+    types,
     fieldRows,
     updateFilter,
     clickSort,
@@ -56,6 +57,7 @@ export default compose(
           <tr key={i}>
             {row.map(d => (
               <HeaderCell
+                types={types}
                 {...d}
                 rowSpan={d.span ? 1 : fieldRows.length - i}
                 alt={

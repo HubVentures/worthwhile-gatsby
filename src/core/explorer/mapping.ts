@@ -15,6 +15,7 @@ export const fieldToRows = (
             rows[0].push({
               name: f,
               type,
+              isList: (root.rgo.schema[type!][f] as any).isList,
               path: newPath,
               sort: sort.includes(f)
                 ? 'asc'
@@ -32,8 +33,8 @@ export const fieldToRows = (
               name: '#1',
               type: type,
               path: newPath,
-              start: (f.start || 0) + 1,
-              end: f.end === undefined ? f.end : f.end + 1,
+              start: f.start || 0,
+              end: f.end,
               firstCol: i === 0 && !path,
             },
             {
@@ -64,12 +65,12 @@ export const fieldToRows = (
 export const dataToRows = (
   fields,
   data,
+  start = 0,
   initial = true,
   first = true,
-  last = true,
 ) => {
   const dataArray = Array.isArray(data) ? data : [data];
-  if (dataArray.length === 0) dataArray.push(undefined);
+  if (dataArray.length === 0) dataArray.push(null);
   return dataArray.reduce((result, values, i) => {
     const dataBlocks = fields.map((f, j) => {
       if (typeof f === 'string') {
@@ -78,14 +79,12 @@ export const dataToRows = (
             {
               field: f,
               value:
-                values === undefined
-                  ? ''
-                  : f.startsWith('#') ? i + 1 : values && values[f],
+                values !== undefined && f.startsWith('#')
+                  ? start + i + 1
+                  : values && (values[f] || null),
               first: first && i === 0,
-              last: last && i === dataArray.length - 1,
-              span: 1,
-              noLeft: f === '#0',
-              noRight: f === '#3',
+              firstCol: f === '#0',
+              lastCol: f === '#3',
             },
           ],
         ];
@@ -96,27 +95,36 @@ export const dataToRows = (
           ...(f.fields.length === 0 ? [''] : f.fields),
           initial && j === fields.length - 1 ? '#3' : '#2',
         ],
-        values === null ? undefined : values && values[f.alias || f.name],
+        (values || {})[f.alias || f.name],
+        f.start || 0,
         false,
         first && i === 0,
-        last && i === dataArray.length - 1,
       );
     });
     const height = Math.max(...dataBlocks.map(rows => rows.length));
     return [
       ...result,
       ...dataBlocks.reduce((res, rows) => {
-        let blockHeight = 0;
         rows.forEach((row, j) => {
           res[j] = [
             ...(res[j] || []),
-            ...row.map(v => ({
-              ...v,
-              ...(j === rows.length - 1 ? { span: height - blockHeight } : {}),
+            ...row.map(
+              v => (v.span === undefined ? { ...v, span: height } : v),
+            ),
+          ];
+        });
+        if (rows[0][0].span !== undefined && height > rows.length) {
+          res[rows.length] = [
+            ...(res[rows.length] || []),
+            ...Array.from({ length: rows[0].length }).map((_, j) => ({
+              ...rows[0][j],
+              value: undefined,
+              span: height - rows.length,
+              first: false,
+              empty: true,
             })),
           ];
-          blockHeight += row[0].span;
-        });
+        }
         return res;
       }, []),
     ];

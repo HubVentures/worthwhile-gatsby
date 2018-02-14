@@ -36,7 +36,7 @@ export default compose(
             ];
           }
           if (props.live && !props.focused) {
-            props.store.set(`${path}_start`, props.start);
+            props.store.set(`${path}_start`, props.start + 1);
             props.store.set(`${path}_end`, props.end);
           }
         } else {
@@ -71,7 +71,7 @@ export default compose(
               if (props.focused) {
                 e.stopPropagation();
                 if (!invalid) {
-                  props.updatePaging(props.path, start, end);
+                  props.updatePaging(props.path, start && start - 1, end);
                   props.setActive(null, true);
                 }
               }
@@ -79,7 +79,7 @@ export default compose(
             onKeyDown: event => {
               if (props.focused && event.keyCode === 13) {
                 if (!invalid) {
-                  props.updatePaging(props.path, start, end);
+                  props.updatePaging(props.path, start && start - 1, end);
                   props.setActive(null, true);
                   (document.activeElement as HTMLElement).blur();
                 }

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Div, Txt } from 'elmnt';
 import { compose, context, enclose, pure, withSize } from 'mishmash';
+import { root } from 'common';
 
 import { colors } from '../styles';
 
@@ -14,6 +15,13 @@ const textStyle = {
   fontFamily: 'Ubuntu, sans-serif',
   fontSize: 12,
   color: colors.black,
+};
+
+const getFieldName = (types, type, field) => {
+  if (field === 'id') return 'Id';
+  if (types[field]) return types[field];
+  if (!type || !root.rgo.schema[type][field]) return field;
+  return root.rgo.schema[type][field].meta.name || field;
 };
 
 const HeaderCellBuilder = live =>
@@ -54,8 +62,10 @@ const HeaderCellBuilder = live =>
         ]),
   )(
     ({
+      types,
       name,
       type,
+      isList,
       span,
       path,
       filter,
@@ -90,7 +100,8 @@ const HeaderCellBuilder = live =>
         style={{
           position: 'relative',
           verticalAlign: 'top',
-          background: alt ? '#e5e5e5' : '#f6f6f6',
+          background:
+            name === '' && isPathAdd ? colors.blue : alt ? '#e0e0e0' : '#eee',
           paddingTop: span || name.startsWith('#') ? 9 : 10,
           paddingRight: 10,
           paddingBottom: 10,
@@ -99,14 +110,29 @@ const HeaderCellBuilder = live =>
           borderRightWidth: !lastCol && name === '#2' && 1,
           borderBottomWidth: !span && 2,
           borderLeftWidth: !firstCol && (name === '#1' ? 2 : !span && 1),
+          ...(name === '' && path === '0'
+            ? {
+                borderTopWidth: 2,
+                borderRightWidth: 0,
+                borderBottomWidth: 0,
+                borderLeftWidth: 0,
+              }
+            : {}),
           borderStyle: 'solid',
           borderColor: '#ccc',
           ...(live && !span ? { width } : {}),
         }}
         colSpan={span || 1}
         rowSpan={rowSpan}
-        ref={!span ? setWidthElem : undefined}
       >
+        <div
+          style={{
+            position: 'absolute',
+            left: (!firstCol && (name === '#1' ? -2 : !span && -1)) || 0,
+            right: !lastCol && name === '#2' ? -1 : 0,
+          }}
+          ref={!span ? setWidthElem : undefined}
+        />
         {live && (
           <div
             style={{
@@ -125,7 +151,7 @@ const HeaderCellBuilder = live =>
                   right: 0,
                   bottom: 1,
                   width: 1,
-                  background: alt ? '#e5e5e5' : '#f6f6f6',
+                  background: alt ? '#e0e0e0' : '#eee',
                   zIndex: 1,
                 }}
               />
@@ -143,13 +169,16 @@ const HeaderCellBuilder = live =>
                   }}
                 >
                   <AddField
+                    types={types}
                     wide={!name}
                     type={type}
                     path={path}
                     clickAdd={clickAdd}
                     active={isPathAdd}
                     setActive={setActive}
+                    focused={isPathAdd && focused}
                     firstCol={firstCol}
+                    empty={name === ''}
                   />
                 </div>
               )}
@@ -165,11 +194,13 @@ const HeaderCellBuilder = live =>
                 }}
               >
                 <AddField
+                  types={types}
                   type={type}
                   path={last}
                   clickAdd={clickAdd}
                   active={isLastPathAdd}
                   setActive={setActive}
+                  focused={isLastPathAdd && focused}
                   lastCol={lastCol}
                 />
               </div>
@@ -188,6 +219,7 @@ const HeaderCellBuilder = live =>
               />
             )}
             {name &&
+              !isList &&
               !span &&
               !name.startsWith('#') && (
                 <div
@@ -269,7 +301,10 @@ const HeaderCellBuilder = live =>
               style={{
                 ...textStyle,
                 fontWeight: 'bold',
-                color,
+                color:
+                  name === ''
+                    ? isPathAdd ? colors.white : colors.blue
+                    : color,
                 cursor: 'default',
                 position: 'relative',
                 userSelect: 'none',
@@ -278,7 +313,9 @@ const HeaderCellBuilder = live =>
                 msUserSelect: 'none',
               }}
             >
-              {name}
+              {name === ''
+                ? path === '0' ? 'Choose data type...' : 'Add field...'
+                : getFieldName(types, type, name)}
             </Txt>
             {span && (
               <FilterField
