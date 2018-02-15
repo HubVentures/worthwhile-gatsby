@@ -110,7 +110,7 @@ const HeaderCellBuilder = live =>
           borderRightWidth: !lastCol && name === '#2' && 1,
           borderBottomWidth: !span && 2,
           borderLeftWidth: !firstCol && (name === '#1' ? 2 : !span && 1),
-          ...(name === '' && path === '0'
+          ...(name === '' && path.indexOf('.') === -1
             ? {
                 borderTopWidth: 2,
                 borderRightWidth: 0,
@@ -157,14 +157,15 @@ const HeaderCellBuilder = live =>
               />
             )}
             {!span &&
-              name !== '#2' && (
+              name !== '#2' &&
+              !firstCol && (
                 <div
                   style={{
                     position: 'absolute',
                     top: 0,
                     ...(name ? { width: 1 } : { right: 0 }),
                     bottom: 0,
-                    left: firstCol ? 2 : 0,
+                    left: 0,
                     zIndex: name ? 20 : 5,
                   }}
                 >
@@ -177,34 +178,33 @@ const HeaderCellBuilder = live =>
                     active={isPathAdd}
                     setActive={setActive}
                     focused={isPathAdd && focused}
-                    firstCol={firstCol}
                     empty={name === ''}
                   />
                 </div>
               )}
-            {last && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  right: lastCol ? 2 : 0,
-                  width: 1,
-                  zIndex: 20,
-                }}
-              >
-                <AddField
-                  types={types}
-                  type={type}
-                  path={last}
-                  clickAdd={clickAdd}
-                  active={isLastPathAdd}
-                  setActive={setActive}
-                  focused={isLastPathAdd && focused}
-                  lastCol={lastCol}
-                />
-              </div>
-            )}
+            {last &&
+              !lastCol && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    right: 0,
+                    width: 1,
+                    zIndex: 20,
+                  }}
+                >
+                  <AddField
+                    types={types}
+                    type={type}
+                    path={last}
+                    clickAdd={clickAdd}
+                    active={isLastPathAdd}
+                    setActive={setActive}
+                    focused={isLastPathAdd && focused}
+                  />
+                </div>
+              )}
             {isSiblingSort && (
               <div
                 style={{
@@ -314,7 +314,7 @@ const HeaderCellBuilder = live =>
               }}
             >
               {name === ''
-                ? path === '0' ? 'Choose data type...' : 'Add field...'
+                ? path.indexOf('.') === -1 ? 'Explore' : 'Add field'
                 : getFieldName(types, type, name)}
             </Txt>
             {span && (

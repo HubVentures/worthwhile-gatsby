@@ -42,8 +42,9 @@ export default compose(
           if (props.path !== path) {
             path = props.path;
             unlisten && unlisten();
-            unlisten = props.store.listen(`${path}_filter`, text =>
-              setState({ text }),
+            unlisten = props.store.listen(
+              `${path}_filter`,
+              text => !props.focused && setState({ text }),
             );
           }
           if (props.live && !props.focused && props.filter !== prevFilter) {

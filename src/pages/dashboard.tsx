@@ -6,13 +6,25 @@ import Explorer from '../core/explorer';
 export default () => (
   <>
     <Helmet title="Dashboard | Worthwhile" />
-    <Explorer
-      types={{
-        befrienders: 'Befrienders',
-        refugees: 'Refugees',
-        ww_people: 'People',
-        ww_equalopps: 'Equal opps',
-      }}
-    />
+    <div style={{ padding: '40px', height: '100%' }}>
+      <Explorer
+        types={{
+          befrienders: 'Befrienders',
+          refugees: 'Refugees',
+          ww_people: 'People',
+          ww_equalopps: 'Equal opps',
+        }}
+        // query={[
+        //   {
+        //     name: 'befrienders',
+        //     fields: ['lastname'],
+        //   },
+        //   {
+        //     name: 'befrienders',
+        //     fields: ['address'],
+        //   },
+        // ]}
+      />
+    </div>
   </>
 );

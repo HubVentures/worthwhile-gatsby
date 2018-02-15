@@ -27,11 +27,13 @@ export default compose(
             path = props.path;
             unlistens && unlistens.forEach(u => u());
             unlistens = [
-              props.store.listen(`${path}_start`, (start = null) =>
-                setState({ start }),
+              props.store.listen(
+                `${path}_start`,
+                (start = null) => !props.focused && setState({ start }),
               ),
-              props.store.listen(`${path}_end`, (end = null) =>
-                setState({ end }),
+              props.store.listen(
+                `${path}_end`,
+                (end = null) => !props.focused && setState({ end }),
               ),
             ];
           }
@@ -45,17 +47,28 @@ export default compose(
       };
       update(initialProps);
       onProps(update);
+      let diff = initialProps.end
+        ? initialProps.end - (initialProps.start + 1)
+        : null;
       const methods = methodWrap();
       return (props, { start, end }) => {
-        const invalid = !start || (end && start >= end);
+        const invalid = !start || (end && start > end);
         return {
           ...props,
           start,
           end,
           invalid,
           ...methods({
-            onChangeStart: v => props.store.set(`${path}_start`, v),
-            onChangeEnd: v => props.store.set(`${path}_end`, v),
+            onChangeStart: v => {
+              props.store.set(`${path}_start`, v);
+              if (v && end) {
+                props.store.set(`${path}_end`, Math.max(v + diff, 1));
+              }
+            },
+            onChangeEnd: v => {
+              props.store.set(`${path}_end`, v);
+              diff = start && v ? v - start : null;
+            },
             onMouseMove: () =>
               props.setActive({ type: 'paging', path: props.path }),
             onMouseLeave: () => props.setActive(null),

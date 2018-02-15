@@ -144,8 +144,6 @@ export default compose(
     onMouseMove,
     onMouseLeave,
     onClick,
-    firstCol,
-    lastCol,
     empty,
   }) => (
     <>
@@ -173,11 +171,7 @@ export default compose(
                 position: 'absolute',
                 ...(wide
                   ? { left: '50%', marginLeft: -6, bottom: 1 }
-                  : {
-                      top: '50%',
-                      left: firstCol ? 0 : lastCol ? -10 : -5,
-                      marginTop: -6,
-                    }),
+                  : { top: '50%', left: -5, marginTop: -6 }),
               }}
             />
           )}
@@ -190,8 +184,8 @@ export default compose(
         style={{
           position: 'absolute',
           top: -5,
-          left: wide ? 0 : firstCol ? -1 : -10,
-          right: wide ? 0 : lastCol ? -1 : -10,
+          left: wide ? 0 : -10,
+          right: wide ? 0 : -10,
           bottom: 0,
           cursor: 'pointer',
           // background: 'rgba(0,255,0,0.1)',

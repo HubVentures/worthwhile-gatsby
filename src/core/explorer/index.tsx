@@ -6,8 +6,6 @@ import { fieldIs } from 'rgo';
 
 import { colors } from '../styles';
 
-import Header from './Header';
-import { dataToRows, fieldToRows } from './mapping';
 import Table from './Table';
 
 const addAliases = (fields, alias = '') =>
@@ -55,251 +53,155 @@ export default compose(
     return props => ({ ...props, store });
   }),
   context('store', ({ store }) => store),
-  enclose(
-    ({ initialProps, setState }) => {
-      let query = initialProps.initial || [];
-      let data = {} as any;
-      let count = 0;
-      const updateQuery = () => {
-        const index = ++count;
-        const aliasQuery = addAliases(query);
-        // console.log('query', index, JSON.stringify(aliasQuery, null, 2));
-        setState({
-          fieldRows: fieldToRows({ fields: aliasQuery }),
-          dataRows: dataToRows(aliasQuery, data),
-          fetching: true,
-        });
-        root.rgo.query(...aliasQuery).then(d => {
-          // console.log('data', count, index, d);
-          if (index === count) {
-            data = d;
-            setState({
-              dataRows: dataToRows(aliasQuery, data),
-              fetching: false,
-            });
-          }
-        });
-      };
-      updateQuery();
+  enclose(({ initialProps, setState }) => {
+    let query = initialProps.query || [];
+    let count = 0;
+    const updateQuery = () => {
+      const index = ++count;
+      const aliasQuery = addAliases(query);
+      setState({ query: aliasQuery, fetching: true });
+      root.rgo.query(...aliasQuery).then(data => {
+        if (index === count) setState({ data, fetching: false });
+      });
+    };
+    updateQuery();
 
-      const updateFilter = (path, filter) => {
-        const splitPath = path.split('.');
-        const f = splitPath.reduce((res, i) => res.fields[i], {
-          fields: query,
-        });
-        f.filter = filter;
-        if (!f.filter) delete f.filter;
-        updateQuery();
-      };
-      const clickSort = path => {
-        const splitPath = path.split('.');
-        const index = splitPath[splitPath.length - 1];
-        const parent = splitPath
-          .slice(0, -1)
-          .reduce((res, i) => res.fields[i], { fields: query });
-        const f = parent.fields[index];
-        const ascIndex = (parent.sort || []).indexOf(f);
-        const descIndex = (parent.sort || []).indexOf(`-${f}`);
-        if (ascIndex !== -1) {
-          parent.sort[ascIndex] = `-${f}`;
-        } else if (descIndex !== -1) {
-          parent.sort.splice(descIndex, 1);
-          if (parent.sort.length === 0) delete parent.sort;
-        } else if (!parent.sort) {
-          parent.sort = [f];
-        } else {
-          let i = 0;
-          while (i !== -1) {
-            const s = parent.sort[i];
-            if (
-              i === parent.sort.length ||
-              parent.fields.indexOf(s[0] === '-' ? s.slice(1) : s) > index
-            ) {
-              parent.sort.splice(i, 0, f);
-              i = -1;
-            } else {
-              i++;
-            }
+    const updateFilter = (path, filter) => {
+      const splitPath = path.split('.');
+      const f = splitPath.reduce((res, i) => res.fields[i], {
+        fields: query,
+      });
+      f.filter = filter;
+      if (!f.filter) delete f.filter;
+      updateQuery();
+    };
+    const clickSort = path => {
+      const splitPath = path.split('.');
+      const index = splitPath[splitPath.length - 1];
+      const parent = splitPath
+        .slice(0, -1)
+        .reduce((res, i) => res.fields[i], { fields: query });
+      const f = parent.fields[index];
+      const ascIndex = (parent.sort || []).indexOf(f);
+      const descIndex = (parent.sort || []).indexOf(`-${f}`);
+      if (ascIndex !== -1) {
+        parent.sort[ascIndex] = `-${f}`;
+      } else if (descIndex !== -1) {
+        parent.sort.splice(descIndex, 1);
+        if (parent.sort.length === 0) delete parent.sort;
+      } else if (!parent.sort) {
+        parent.sort = [f];
+      } else {
+        let i = 0;
+        while (i !== -1) {
+          const s = parent.sort[i];
+          if (
+            i === parent.sort.length ||
+            parent.fields.indexOf(s[0] === '-' ? s.slice(1) : s) > index
+          ) {
+            parent.sort.splice(i, 0, f);
+            i = -1;
+          } else {
+            i++;
           }
         }
-        updateQuery();
-      };
-      const updatePaging = (path, start, end) => {
-        const splitPath = path.split('.');
-        const f = splitPath.reduce((res, i) => res.fields[i], {
-          fields: query,
-        });
-        f.start = start;
-        f.end = end;
-        if (!f.end) delete f.end;
-        updateQuery();
-      };
-      const clickAdd = (path, type, field) => {
-        const splitPath = path.split('.');
-        const index = parseInt(splitPath[splitPath.length - 1], 10);
-        const parent = splitPath
-          .slice(0, -1)
-          .reduce((res, i) => res.fields[i], { fields: query });
-        parent.fields.splice(
-          index,
-          0,
-          field === 'Id' ||
-          (type && fieldIs.scalar(root.rgo.schema[type][field]))
-            ? field
-            : { name: field, fields: [] },
-        );
-        updateQuery();
-      };
-      const clickRemove = path => {
-        const splitPath = path.split('.');
-        const index = parseInt(splitPath[splitPath.length - 1], 10);
-        const parent = splitPath
-          .slice(0, -1)
-          .reduce((res, i) => res.fields[i], { fields: query });
-
-        const f = parent.fields[index];
-        const ascIndex = (parent.sort || []).indexOf(f);
-        const descIndex = (parent.sort || []).indexOf(`-${f}`);
-        if (ascIndex !== -1) parent.sort.splice(ascIndex, 1);
-        else if (descIndex !== -1) parent.sort.splice(descIndex, 1);
-        if (parent.sort && parent.sort.length === 0) delete parent.sort;
-
-        parent.fields.splice(index, 1);
-        updateQuery();
-      };
-      const setSize = size => setState({ size });
-      return (props, state) => ({
-        ...props,
-        ...state,
-        updateFilter,
-        clickSort,
-        updatePaging,
-        clickAdd,
-        clickRemove,
-        setSize,
+      }
+      updateQuery();
+    };
+    const updatePaging = (path, start, end) => {
+      const splitPath = path.split('.');
+      const f = splitPath.reduce((res, i) => res.fields[i], {
+        fields: query,
       });
-    },
-    { fieldRows: null, dataRows: null, fetching: true, size: { width: 0 } },
-  ),
-  branch(
-    ({ fieldRows }) => !fieldRows,
-    render(() => <Spinner style={{ color: colors.blue }} />),
-  ),
-  enclose(() => {
-    let scrollElem;
-    const setScrollElem = e => (scrollElem = e);
-    let scrollerElem;
-    const setScrollerElem = e => (scrollerElem = e);
-    const setScroll = () =>
-      false &&
-      scrollElem &&
-      scrollerElem &&
-      (scrollElem.style.left = `-${scrollerElem.scrollLeft}px`);
+      f.start = start;
+      f.end = end;
+      if (!f.end) delete f.end;
+      updateQuery();
+    };
+    const clickAdd = (path, type, field) => {
+      const splitPath = path.split('.');
+      const index = parseInt(splitPath[splitPath.length - 1], 10);
+      const parent = splitPath
+        .slice(0, -1)
+        .reduce((res, i) => res.fields[i], { fields: query });
+      parent.fields.splice(
+        index,
+        0,
+        field === 'Id' || (type && fieldIs.scalar(root.rgo.schema[type][field]))
+          ? field
+          : { name: field, fields: [] },
+      );
+      updateQuery();
+    };
+    const clickRemove = path => {
+      const splitPath = path.split('.');
+      const index = parseInt(splitPath[splitPath.length - 1], 10);
+      const parent = splitPath
+        .slice(0, -1)
+        .reduce((res, i) => res.fields[i], { fields: query });
+
+      const f = parent.fields[index];
+      const ascIndex = (parent.sort || []).indexOf(f);
+      const descIndex = (parent.sort || []).indexOf(`-${f}`);
+      if (ascIndex !== -1) parent.sort.splice(ascIndex, 1);
+      else if (descIndex !== -1) parent.sort.splice(descIndex, 1);
+      if (parent.sort && parent.sort.length === 0) delete parent.sort;
+
+      parent.fields.splice(index, 1);
+      updateQuery();
+    };
+
     return (props, state) => ({
       ...props,
       ...state,
-      setScrollElem,
-      setScrollerElem,
-      setScroll,
+      updateFilter,
+      clickSort,
+      updatePaging,
+      clickAdd,
+      clickRemove,
     });
   }),
+  branch(
+    ({ query, data }) => !query || !data,
+    render(() => <Spinner style={{ color: colors.blue }} />),
+  ),
 )(
   ({
     types,
-    fieldRows,
-    dataRows,
+    query,
+    data,
     fetching,
     updateFilter,
     clickSort,
     updatePaging,
     clickAdd,
     clickRemove,
-    size,
-    setSize,
   }) => (
-    <div style={{ padding: '50px', height: '100%' }}>
-      <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div style={{ height: '100%', whiteSpace: 'nowrap', overflow: 'auto' }}>
+      {Array.from({ length: query.length + 1 }).map((_, i) => (
         <div
           style={{
-            position: 'relative',
-            height: size.height && size.height + 2,
-            maxHeight: '100%',
-            width: size.width && size.width + 4,
-            maxWidth: '100%',
-            overflow: 'scroll',
-            borderLeft: '2px solid #ccc',
-            borderRight: '2px solid #ccc',
-            borderBottom: '2px solid #ccc',
+            display: 'inline-block',
+            verticalAlign: 'top',
+            height: '100%',
+            paddingLeft: i !== 0 && 30,
           }}
+          key={i}
         >
-          <div
-            style={{
-              position: 'relative',
-              width: size.width,
-              height: '100%',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ width: 100000 }}>
-                <Header
-                  types={types}
-                  fieldRows={fieldRows}
-                  updateFilter={updateFilter}
-                  clickSort={clickSort}
-                  updatePaging={updatePaging}
-                  clickAdd={clickAdd}
-                  clickRemove={clickRemove}
-                />
-              </div>
-            </div>
-            <div
-              style={{
-                height: '100%',
-                overflow: 'hidden',
-                width: size.width,
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: 100000,
-                  paddingRight: 50,
-                  marginRight: -50,
-                  overflow: 'scroll',
-                }}
-              >
-                <Table
-                  types={types}
-                  fieldRows={fieldRows}
-                  dataRows={dataRows}
-                  setSize={setSize}
-                />
-                {fetching && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      bottom: 0,
-                      left: 0,
-                      background: 'rgba(255,255,255,0.9)',
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
+          <Table
+            types={types}
+            index={i}
+            query={query[i] ? [query[i]] : []}
+            data={data}
+            fetching={fetching}
+            updateFilter={updateFilter}
+            clickSort={clickSort}
+            updatePaging={updatePaging}
+            clickAdd={clickAdd}
+            clickRemove={clickRemove}
+          />
         </div>
-      </div>
+      ))}
     </div>
   ),
 );

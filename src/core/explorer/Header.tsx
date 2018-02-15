@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { compose, enclose, pure } from 'mishmash';
+import { enclose } from 'mishmash';
 
 import { colors } from '../styles';
 
@@ -12,31 +12,28 @@ const parent = (path, depth = 1) =>
     .slice(0, -depth)
     .join('.');
 
-export default compose(
-  pure,
-  enclose(
-    ({ setState }) => {
-      const setActive = (active, focus = false) =>
-        setState(({ activeFocus }) => {
-          if (activeFocus && !focus) return;
-          return {
-            activeFocus: (active && focus) || false,
-            activeType: active && active.type,
-            activePath: active && active.path,
-          };
-        });
-      return (props, state) => ({
-        ...props,
-        ...state,
-        setActive,
+export default enclose(
+  ({ setState }) => {
+    const setActive = (active, focus = false) =>
+      setState(({ activeFocus }) => {
+        if (activeFocus && !focus) return;
+        return {
+          activeFocus: (active && focus) || false,
+          activeType: active && active.type,
+          activePath: active && active.path,
+        };
       });
-    },
-    {
-      activeFocus: false,
-      activeType: null as null | string,
-      activePath: null as null | string,
-    },
-  ),
+    return (props, state) => ({
+      ...props,
+      ...state,
+      setActive,
+    });
+  },
+  {
+    activeFocus: false,
+    activeType: null as null | string,
+    activePath: null as null | string,
+  },
 )(
   ({
     types,

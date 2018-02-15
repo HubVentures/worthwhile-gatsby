@@ -2,15 +2,16 @@ import { root } from 'common';
 
 export const fieldToRows = (
   { sort = [] as any, fields },
-  type = null as 'string' | null,
-  path = '',
+  type,
+  path,
+  baseIndex = 0,
 ) =>
   fields.length === 0
-    ? [[{ name: '', type, path: path ? `${path}.${0}` : '0' }]]
+    ? [[{ name: '', type, path: path ? `${path}.${0}` : `${baseIndex}` }]]
     : fields.reduce(
         (rows, f, i) => {
-          const newPath = path ? `${path}.${i}` : `${i}`;
-          const nextPath = path ? `${path}.${i + 1}` : `${i + 1}`;
+          const newPath = path ? `${path}.${i}` : `${baseIndex + i}`;
+          const nextPath = path ? `${path}.${i + 1}` : `${baseIndex + i + 1}`;
           if (typeof f === 'string') {
             rows[0].push({
               name: f,
