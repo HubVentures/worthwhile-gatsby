@@ -52,7 +52,7 @@ export default compose(
         : null;
       const methods = methodWrap();
       return (props, { start, end }) => {
-        const invalid = !start || (end && start > end);
+        const invalid = start && end && start > end;
         return {
           ...props,
           start,
@@ -84,7 +84,7 @@ export default compose(
               if (props.focused) {
                 e.stopPropagation();
                 if (!invalid) {
-                  props.updatePaging(props.path, start && start - 1, end);
+                  props.updatePaging(props.path, start ? start - 1 : 0, end);
                   props.setActive(null, true);
                 }
               }
@@ -92,7 +92,7 @@ export default compose(
             onKeyDown: event => {
               if (props.focused && event.keyCode === 13) {
                 if (!invalid) {
-                  props.updatePaging(props.path, start && start - 1, end);
+                  props.updatePaging(props.path, start ? start - 1 : 0, end);
                   props.setActive(null, true);
                   (document.activeElement as HTMLElement).blur();
                 }

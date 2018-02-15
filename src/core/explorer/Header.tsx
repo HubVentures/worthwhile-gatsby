@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { enclose } from 'mishmash';
+import { compose, enclose, pure } from 'mishmash';
 
 import { colors } from '../styles';
 
-import { HeaderCell } from './HeaderCell';
+import HeaderCell from './HeaderCell';
 
 const parent = (path, depth = 1) =>
   path &&
@@ -12,28 +12,31 @@ const parent = (path, depth = 1) =>
     .slice(0, -depth)
     .join('.');
 
-export default enclose(
-  ({ setState }) => {
-    const setActive = (active, focus = false) =>
-      setState(({ activeFocus }) => {
-        if (activeFocus && !focus) return;
-        return {
-          activeFocus: (active && focus) || false,
-          activeType: active && active.type,
-          activePath: active && active.path,
-        };
+export default compose(
+  pure,
+  enclose(
+    ({ setState }) => {
+      const setActive = (active, focus = false) =>
+        setState(({ activeFocus }) => {
+          if (activeFocus && !focus) return;
+          return {
+            activeFocus: (active && focus) || false,
+            activeType: active && active.type,
+            activePath: active && active.path,
+          };
+        });
+      return (props, state) => ({
+        ...props,
+        ...state,
+        setActive,
       });
-    return (props, state) => ({
-      ...props,
-      ...state,
-      setActive,
-    });
-  },
-  {
-    activeFocus: false,
-    activeType: null as null | string,
-    activePath: null as null | string,
-  },
+    },
+    {
+      activeFocus: false,
+      activeType: null as null | string,
+      activePath: null as null | string,
+    },
+  ),
 )(
   ({
     types,
@@ -54,6 +57,7 @@ export default enclose(
           <tr key={i}>
             {row.map(d => (
               <HeaderCell
+                live
                 types={types}
                 {...d}
                 rowSpan={d.span ? 1 : fieldRows.length - i}

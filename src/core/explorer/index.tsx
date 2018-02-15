@@ -9,13 +9,22 @@ import { colors } from '../styles';
 import Table from './Table';
 
 const addAliases = (fields, alias = '') =>
-  fields.map((field, i) => {
-    if (typeof field === 'string') return field;
+  fields.map((f, i) => {
+    if (typeof f === 'string') return f;
     const newAlias = `${alias}_${i}`;
     return {
-      ...field,
+      ...f,
       alias: newAlias,
-      fields: addAliases(field.fields, newAlias),
+      fields: addAliases(f.fields, newAlias),
+    };
+  });
+
+const addIds = fields =>
+  fields.map(f => {
+    if (typeof f === 'string') return f;
+    return {
+      ...f,
+      fields: f.fields.includes('id') ? f.fields : ['id', ...f.fields],
     };
   });
 
@@ -35,12 +44,15 @@ export default compose(
     const values = {};
     const listeners = {};
     const store = {
-      get: key => values[key],
       set: (key, value) => {
         if (value !== values[key]) {
           values[key] = value;
-          listeners[key] && listeners[key].forEach(l => l(value));
+          listeners[key] && listeners[key].forEach(l => l(values[key]));
         }
+      },
+      update: (key, map: (v) => any) => {
+        values[key] = map(values[key]);
+        listeners[key] && listeners[key].forEach(l => l(values[key]));
       },
       listen: (key, listener) => {
         listener(values[key]);
@@ -60,7 +72,7 @@ export default compose(
       const index = ++count;
       const aliasQuery = addAliases(query);
       setState({ query: aliasQuery, fetching: true });
-      root.rgo.query(...aliasQuery).then(data => {
+      root.rgo.query(...addIds(aliasQuery)).then(data => {
         if (index === count) setState({ data, fetching: false });
       });
     };
@@ -127,7 +139,7 @@ export default compose(
       parent.fields.splice(
         index,
         0,
-        field === 'Id' || (type && fieldIs.scalar(root.rgo.schema[type][field]))
+        field === 'id' || (type && fieldIs.scalar(root.rgo.schema[type][field]))
           ? field
           : { name: field, fields: [] },
       );

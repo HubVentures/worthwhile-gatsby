@@ -14,16 +14,12 @@ export default () => (
           ww_people: 'People',
           ww_equalopps: 'Equal opps',
         }}
-        // query={[
-        //   {
-        //     name: 'befrienders',
-        //     fields: ['lastname'],
-        //   },
-        //   {
-        //     name: 'befrienders',
-        //     fields: ['address'],
-        //   },
-        // ]}
+        query={[
+          {
+            name: 'befrienders',
+            fields: ['firstname', 'lastname', 'address'],
+          },
+        ]}
       />
     </div>
   </>
