@@ -44,6 +44,7 @@ export default compose(
     const values = {};
     const listeners = {};
     const store = {
+      get: key => values[key],
       set: (key, value) => {
         if (value !== values[key]) {
           values[key] = value;
@@ -67,13 +68,14 @@ export default compose(
   context('store', ({ store }) => store),
   enclose(({ initialProps, setState }) => {
     let query = initialProps.query || [];
-    let count = 0;
+    let unsubscribe;
     const updateQuery = () => {
-      const index = ++count;
       const aliasQuery = addAliases(query);
-      setState({ query: aliasQuery, fetching: true });
-      root.rgo.query(...addIds(aliasQuery)).then(data => {
-        if (index === count) setState({ data, fetching: false });
+      setState({ query: aliasQuery });
+      if (unsubscribe) unsubscribe();
+      unsubscribe = root.rgo.query(...addIds(aliasQuery), data => {
+        if (!data) setState({ fetching: true });
+        else setState({ data: { ...data }, fetching: false });
       });
     };
     updateQuery();

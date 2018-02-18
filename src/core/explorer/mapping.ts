@@ -1,4 +1,4 @@
-import { root } from 'common';
+import { noUndef, root } from 'common';
 import { getValueString } from 'common-client';
 
 export const fieldToRows = (
@@ -83,13 +83,14 @@ export const dataToRows = (
               type,
               id: values && values.id,
               field: f,
-              value:
+              value: noUndef(values && values[f]),
+              text:
                 f === '' || values === undefined
                   ? ''
                   : f.startsWith('#')
                     ? start + i + 1
                     : getValueString(
-                        values[f] || null,
+                        noUndef(values && values[f]),
                         (root.rgo.schema[type!][f] as any).scalar,
                       ),
               first: first && i === 0,
@@ -129,7 +130,7 @@ export const dataToRows = (
             ...(res[rows.length] || []),
             ...Array.from({ length: rows[0].length }).map((_, j) => ({
               ...rows[0][j],
-              value: undefined,
+              text: undefined,
               span: height - rows.length,
               first: false,
               empty: true,
