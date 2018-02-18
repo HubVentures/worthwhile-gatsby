@@ -10,7 +10,21 @@ import { colors } from '../styles';
 
 import inputStyle from './inputStyle';
 
-const Editable = ({ value, onChange, inputRef, onBlur }) => (
+const Editable = enclose(({ initialProps, onProps, setState }) => {
+  const unlisten = initialProps.store.listen('editing', (editing = {}) =>
+    setState({ editing }),
+  );
+  onProps(props => !props && unlisten());
+  const onChange = value =>
+    initialProps.store.update('editing', v => ({ ...v, value }));
+  let lastValue = initialProps.store.get('editing').value;
+  return (props, { editing }) => ({
+    ...props,
+    value:
+      Object.keys(editing).length > 0 ? (lastValue = editing.value) : lastValue,
+    onChange,
+  });
+})(({ value, onChange, inputRef, onBlur }) => (
   <div>
     <Input
       type="string"
@@ -38,17 +52,20 @@ const Editable = ({ value, onChange, inputRef, onBlur }) => (
       ref={inputRef}
     />
   </div>
-);
+));
 
 export default compose(
   context('store'),
-  enclose(({ initialProps, setState }) => {
-    initialProps.store.listen('editing', (editing = {}) =>
-      setState({ editing }),
-    );
-    initialProps.store.listen('initial', (initial = {}) =>
-      setState({ initial }),
-    );
+  enclose(({ initialProps, onProps, setState }) => {
+    const unlistens = [
+      initialProps.store.listen('editing', (editing = {}) =>
+        setState({ editing }),
+      ),
+      initialProps.store.listen('initial', (initial = {}) =>
+        setState({ initial }),
+      ),
+    ];
+    onProps(props => !props && unlistens.forEach(u => u()));
     const startEditing = (key, value) => {
       initialProps.store.set('editing', { key, value });
       initialProps.store.update('initial', (initial = {}) => ({
@@ -65,14 +82,12 @@ export default compose(
         return { ...initial, [key]: v };
       });
     };
-    const onChange = value =>
-      initialProps.store.update('editing', v => ({ ...v, value }));
     return (props, state) => ({
       ...props,
       ...state,
       startEditing,
       stopEditing,
-      onChange,
+      updateWidths: props.store.updateWidths,
     });
   }),
 )(
@@ -160,8 +175,11 @@ export default compose(
           .on('mouseenter', function() {
             this.style.background = '#eee';
           })
-          .on('mouseleave', function() {
-            this.style.background = 'white';
+          .on('mouseleave', function(d) {
+            this.style.background =
+              inputRef !== this && Object.keys(props.initial).includes(d.key)
+                ? '#f4fbff'
+                : 'white';
           })
           .on('dblclick', function({ key, value }) {
             props.startEditing(key, value);
@@ -172,8 +190,7 @@ export default compose(
               this.style.padding = null;
               ReactDOM.render(
                 <Editable
-                  value={props.editing.value}
-                  onChange={props.onChange}
+                  store={props.store}
                   onBlur={() => {
                     props.stopEditing();
                     if (inputRef === this) inputRef = null;
@@ -227,6 +244,8 @@ export default compose(
             ReactDOM.unmountComponentAtNode(this);
           });
       }
+
+      props.updateWidths();
     });
   }, 'tbody'),
 );

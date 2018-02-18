@@ -4,9 +4,17 @@ import rgo, { resolvers } from 'rgo';
 import { root } from 'common';
 import { cssBase, StickyFooter } from 'common-client';
 import Helmet from 'react-helmet';
+import * as webfont from 'webfontloader';
 
 import Menu from '../core/Menu';
 import styles from '../core/styles';
+
+const fontsLoadedEvent = document.createEvent('Event');
+fontsLoadedEvent.initEvent('fontsLoaded', true, true);
+webfont.load({
+  google: { families: ['Ubuntu:300,400,700'] },
+  active: () => window.dispatchEvent(fontsLoadedEvent),
+});
 
 root.rgo = rgo(
   resolvers.fetch(process.env.DATA_URL!, () => {
@@ -21,11 +29,6 @@ root.rgo = rgo(
 export default ({ location, children }) => (
   <>
     <Helmet title="Worthwhile">
-      <link
-        type="text/css"
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,700"
-      />
       <style>
         {`
         ${cssBase}

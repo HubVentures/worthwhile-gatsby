@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { compose, map, pure, withSize, Wrap } from 'mishmash';
+import { compose, enclose, map, methodWrap, pure, withSize } from 'mishmash';
 
 import TableData from './TableData';
 import Header from './Header';
@@ -35,12 +35,42 @@ const DataTable = pure(({ types, fieldRows, dataRows, fetching }) => (
 
 export default compose(
   pure,
-  map(({ index, query, data, ...props }) => ({
+  map(({ query, data, ...props }) => ({
     ...props,
-    fieldRows: fieldToRows({ fields: query }, null, '', index),
+    fieldRows: fieldToRows({ fields: query }, null, '', props.index),
     dataRows: dataToRows(query, data),
   })),
   withSize('height', 'setHeightElem', ({ height = 0 }) => height),
+  enclose(({ initialProps, onProps, setState }) => {
+    let key;
+    let unlisten;
+    const update = props => {
+      if (props) {
+        const newKey = `${props.index}_table_width`;
+        if (newKey !== key) {
+          key = newKey;
+          unlisten && unlisten();
+          unlisten = props.store.listen(key, width => setState({ width }));
+        }
+      } else {
+        unlisten();
+      }
+    };
+    update(initialProps);
+    onProps(update);
+
+    const methods = methodWrap();
+    return (props, state) => ({
+      ...props,
+      ...state,
+      ...methods({
+        setSizeElem: elem => {
+          props.setHeightElem(elem);
+          props.store.setWidthElem(`${props.index}_table_width`, elem);
+        },
+      }),
+    });
+  }),
 )(
   ({
     types,
@@ -53,7 +83,8 @@ export default compose(
     clickAdd,
     clickRemove,
     height,
-    setHeightElem,
+    width,
+    setSizeElem,
   }) => (
     <div
       style={{
@@ -79,7 +110,7 @@ export default compose(
             position: 'absolute',
             top: 0,
             left: 0,
-            right: 0,
+            width: 1000000,
             zIndex: 100,
           }}
         >
@@ -93,7 +124,13 @@ export default compose(
             clickRemove={clickRemove}
           />
         </div>
-        <div style={{ height: '100%', paddingTop: fieldRows.length * 33 + 2 }}>
+        <div
+          style={{
+            height: '100%',
+            paddingTop: fieldRows.length * 33 + 2,
+            overflow: 'hidden',
+          }}
+        >
           <div style={{ height: '100%', overflow: 'scroll' }}>
             <div
               style={{
@@ -101,13 +138,17 @@ export default compose(
                 marginTop: -(fieldRows.length * 33 + 2),
               }}
             >
-              <div style={{ display: 'table' }} ref={setHeightElem}>
-                <DataTable
-                  types={types}
-                  fieldRows={fieldRows}
-                  dataRows={dataRows}
-                  fetching={fetching}
-                />
+              <div style={{ width, overflow: 'hidden' }}>
+                <div style={{ width: 1000000 }}>
+                  <div style={{ display: 'table' }} ref={setSizeElem}>
+                    <DataTable
+                      types={types}
+                      fieldRows={fieldRows}
+                      dataRows={dataRows}
+                      fetching={fetching}
+                    />
+                  </div>
+                </div>
               </div>
               {fetching && (
                 <div

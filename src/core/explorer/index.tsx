@@ -41,19 +41,44 @@ export default compose(
     render(() => <Spinner style={{ color: colors.blue }} />),
   ),
   enclose(() => {
+    const widthElems = {};
+
+    const updateWidths = () => {
+      Object.keys(widthElems).forEach(key => {
+        const width = widthElems[key].getBoundingClientRect().width;
+        if (width !== values[key]) {
+          values[key] = width;
+          listeners[key] && listeners[key].forEach(l => l(values[key]));
+        }
+      });
+    };
+    window.addEventListener('fontsLoaded', updateWidths);
+
     const values = {};
     const listeners = {};
     const store = {
+      setWidthElem: (key, elem) => {
+        if (elem) {
+          widthElems[key] = elem;
+        } else {
+          delete widthElems[key];
+          delete values[key];
+        }
+      },
+      updateWidths,
+
       get: key => values[key],
       set: (key, value) => {
         if (value !== values[key]) {
           values[key] = value;
           listeners[key] && listeners[key].forEach(l => l(values[key]));
+          setTimeout(updateWidths);
         }
       },
       update: (key, map: (v) => any) => {
         values[key] = map(values[key]);
         listeners[key] && listeners[key].forEach(l => l(values[key]));
+        setTimeout(updateWidths);
       },
       listen: (key, listener) => {
         listener(values[key]);
@@ -75,7 +100,10 @@ export default compose(
       if (unsubscribe) unsubscribe();
       unsubscribe = root.rgo.query(...addIds(aliasQuery), data => {
         if (!data) setState({ fetching: true });
-        else setState({ data: { ...data }, fetching: false });
+        else
+          setState({ data: { ...data } }, () =>
+            setTimeout(() => setState({ fetching: false })),
+          );
       });
     };
     updateQuery();
@@ -181,6 +209,7 @@ export default compose(
   ),
 )(
   ({
+    store,
     types,
     query,
     data,
@@ -203,6 +232,7 @@ export default compose(
           key={i}
         >
           <Table
+            store={store}
             types={types}
             index={i}
             query={query[i] ? [query[i]] : []}

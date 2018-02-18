@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
-import { branch, compose, context, enclose, pure, withSize } from 'mishmash';
+import { branch, compose, context, enclose, methodWrap, pure } from 'mishmash';
 import { root } from 'common';
 
 import { colors, icons } from '../styles';
@@ -29,12 +29,16 @@ export default compose(
   context('store'),
   branch(
     ({ live, fetching }) => !live && !fetching,
-    withSize(
-      (props, width) =>
-        props.store.set(`${props.path}_${props.name}_width`, width),
-      'setWidthElem',
-      ({ width }) => width,
-    ),
+    enclose(() => {
+      const methods = methodWrap();
+      return props => ({
+        ...props,
+        ...methods({
+          setWidthElem: elem =>
+            props.store.setWidthElem(`${props.path}_${props.name}_width`, elem),
+        }),
+      });
+    }),
   ),
   branch(
     ({ live }) => live,
@@ -119,7 +123,7 @@ export default compose(
           : {}),
         borderStyle: 'solid',
         borderColor: '#ccc',
-        ...(live && !span ? { width } : {}),
+        ...(live && !span ? { minWidth: width } : {}),
       }}
       colSpan={span || 1}
       rowSpan={rowSpan}

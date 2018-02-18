@@ -5,13 +5,11 @@
     "dev": "gatsby develop",
     "build": "gatsby build",
     "serve": "gatsby serve",
-    "prettier": "prettier --single-quote --trailing-comma all --write \"src/**/*.{ts,tsx}\""
+    "prettier":
+      "prettier --single-quote --trailing-comma all --write \"src/**/*.{ts,tsx}\""
   },
   "babel": {
-    "presets": [
-      "env",
-      "stage-0"
-    ]
+    "presets": ["env", "stage-0"]
   },
   "dependencies": {
     "@types/react": "^16.0.36",
@@ -38,6 +36,7 @@
     "rgo": "^0.3.7",
     "style-transform": "^0.1.9",
     "typescript": "^2.7.1",
+    "webfontloader": "^1.6.28",
     "whatwg-fetch": "^2.0.3"
   }
 }
