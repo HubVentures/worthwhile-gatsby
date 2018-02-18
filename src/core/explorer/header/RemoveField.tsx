@@ -1,23 +1,20 @@
 import * as React from 'react';
 import { Icon } from 'elmnt';
-import { enclose, methodWrap } from 'mishmash';
+import { enclose } from 'mishmash';
 
-import { colors, icons } from '../styles';
+import { colors, icons } from '../../styles';
 
-export default enclose(() => {
-  const methods = methodWrap();
-  return ({ path, ...props }) => ({
-    ...props,
-    ...methods({
-      onMouseMove: () => props.setActive({ type: 'remove', path }),
-      onMouseLeave: () => props.setActive(null),
-      onClick: () => {
-        props.clickRemove(path);
-        props.setActive(null);
-      },
-    }),
-  });
-})(({ relation, active, onMouseMove, onMouseLeave, onClick }) => (
+export default enclose(({ methods }) => ({ path, ...props }) => ({
+  ...props,
+  ...methods({
+    onMouseMove: () => props.setActive({ type: 'remove', path }),
+    onMouseLeave: () => props.setActive(null),
+    onClick: () => {
+      props.clickRemove(path);
+      props.setActive(null);
+    },
+  }),
+}))(({ relation, active, onMouseMove, onMouseLeave, onClick }) => (
   <>
     {active && (
       <Icon

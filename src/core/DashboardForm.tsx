@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Txt } from 'elmnt';
-import { branch, compose, enclose, render, withHover, Wrap } from 'mishmash';
+import { branch, compose, enclose, render, Use, withHover } from 'mishmash';
 import { Redirect } from 'react-router-dom';
 import { Spinner } from 'common-client';
 
@@ -15,7 +15,7 @@ const FormBar = ({ valid, button, submit }: any) => (
     }}
   >
     {valid && (
-      <Wrap hoc={withHover}>
+      <Use hoc={withHover}>
         {({ isHovered, hoverProps }) => (
           <Txt
             onClick={submit}
@@ -32,7 +32,7 @@ const FormBar = ({ valid, button, submit }: any) => (
             {button || 'Save'}
           </Txt>
         )}
-      </Wrap>
+      </Use>
     )}
   </Div>
 );
@@ -40,14 +40,14 @@ const FormBar = ({ valid, button, submit }: any) => (
 export default branch(
   ({ redirect }) => redirect,
   compose(
-    enclose(
-      ({ setState }) => (props, state) => ({
+    enclose(({ setState }) => {
+      setState({ values: null });
+      return (props, state) => ({
         ...props,
         ...state,
         onSubmit: values => setState({ values }),
-      }),
-      { values: null },
-    ),
+      });
+    }),
     branch(
       ({ values }) => values,
       render(({ redirect, values }) => <Redirect to={redirect(values)} />),

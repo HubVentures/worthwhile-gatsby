@@ -4,14 +4,13 @@ import {
   compose,
   enclose,
   fitScreen,
-  methodWrap,
   Outside,
   renderLifted,
   withHover,
 } from 'mishmash';
 import { root } from 'common';
 
-import { colors, icons } from '../styles';
+import { colors, icons } from '../../styles';
 
 const textStyle = {
   fontFamily: 'Ubuntu, sans-serif',
@@ -27,15 +26,10 @@ const getFieldName = (types, type, field) => {
 };
 
 const Item = compose(
-  enclose(() => {
-    const methods = methodWrap();
-    return props => ({
-      ...props,
-      ...methods({
-        onClick: () => props.onClick(props.field),
-      }),
-    });
-  }),
+  enclose(({ methods }) => props => ({
+    ...props,
+    ...methods({ onClick: () => props.onClick(props.field) }),
+  })),
   withHover,
 )(({ types, type, field, relation, onClick, hoverProps, isHovered }) => (
   <Txt
@@ -59,22 +53,19 @@ const Item = compose(
 ));
 
 export default compose(
-  enclose(() => {
-    const methods = methodWrap();
-    return ({ path, ...props }) => ({
-      ...props,
-      ...methods({
-        onMouseMove: () => props.setActive({ type: 'add', path }),
-        onMouseLeave: () => props.setActive(null),
-        onClick: () => props.setActive({ type: 'add', path }, true),
-        onClickItem: field => {
-          props.clickAdd(path, props.type, field);
-          props.setActive(null, true);
-        },
-        onClickOutside: () => props.setActive(null, true),
-      }),
-    });
-  }),
+  enclose(({ methods }) => ({ path, ...props }) => ({
+    ...props,
+    ...methods({
+      onMouseMove: () => props.setActive({ type: 'add', path }),
+      onMouseLeave: () => props.setActive(null),
+      onClick: () => props.setActive({ type: 'add', path }, true),
+      onClickItem: field => {
+        props.clickAdd(path, props.type, field);
+        props.setActive(null, true);
+      },
+      onClickOutside: () => props.setActive(null, true),
+    }),
+  })),
   renderLifted(
     fitScreen(({ liftBounds: { top, left, height, width } }) => ({
       base: { top: top + height, left: left + width * 0.5 - 100, width: 203 },

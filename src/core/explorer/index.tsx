@@ -1,12 +1,42 @@
 import * as React from 'react';
 import { branch, compose, context, enclose, render } from 'mishmash';
-import { Spinner } from 'common-client';
-import { root } from 'common';
-import { fieldIs } from 'rgo';
+import { getValueString, Spinner } from 'common-client';
+import { Obj, root } from 'common';
+import { Field, fieldIs } from 'rgo';
 
 import { colors } from '../styles';
 
 import Table from './Table';
+
+const printFilter = (filter: any[] | null, fields: Obj<Field>) => {
+  if (!filter) return '';
+  if (filter[0] === 'AND' || filter[0] === 'OR') {
+    return `(${filter
+      .slice(1)
+      .map(f => printFilter(f, fields))
+      .join(filter[0] === 'AND' ? ', ' : ' OR ')})`;
+  }
+  const field = fields[filter[0]];
+  if (!field || !fieldIs.scalar(field)) throw new Error('Invalid field');
+  const op = filter.length === 3 ? filter[1] : '=';
+  const value = filter[filter.length - 1];
+  return `${filter[0]} ${op} ${getValueString(value, field.scalar)}`;
+};
+
+const initStore = (store, fields, type?, path?) =>
+  fields.filter(f => typeof f !== 'string').forEach((f, i) => {
+    const newType = type ? (root.rgo.schema[type][f.name] as any).type : f.name;
+    const newPath = path ? `${path}.${i}` : `${i}`;
+    if (f.filter) {
+      store.set(
+        `${newPath}_filter`,
+        printFilter(f.filter, root.rgo.schema[newType]),
+      );
+    }
+    store.set(`${newPath}_start`, (f.start || 0) + 1);
+    if (f.end) store.set(`${newPath}_end`, f.end);
+    initStore(store, f.fields || [], newPath);
+  });
 
 const addAliases = (fields, alias = '') =>
   fields.map((f, i) => {
@@ -29,20 +59,26 @@ const addIds = fields =>
   });
 
 export default compose(
-  enclose(
-    ({ setState }) => {
-      root.rgo.query().then(() => setState({ loading: false }));
-      return (props, { loading }) => ({ ...props, loading });
-    },
-    { loading: true },
-  ),
+  enclose(({ setState }) => {
+    setState({ loading: true });
+    root.rgo.query().then(() => setState({ loading: false }));
+    return (props, { loading }) => ({ ...props, loading });
+  }),
   branch(
     ({ loading }) => loading,
     render(() => <Spinner style={{ color: colors.blue }} />),
   ),
   enclose(() => {
-    const widthElems = {};
+    const values = {};
+    const listeners = {};
+    const listen = (key, listener) => {
+      listener(values[key]);
+      listeners[key] = listeners[key] || [];
+      listeners[key].push(listener);
+      return () => listeners[key].splice(listeners[key].indexOf(listener), 1);
+    };
 
+    const widthElems = {};
     const updateWidths = () => {
       Object.keys(widthElems).forEach(key => {
         const width = widthElems[key].getBoundingClientRect().width;
@@ -54,19 +90,7 @@ export default compose(
     };
     window.addEventListener('fontsLoaded', updateWidths);
 
-    const values = {};
-    const listeners = {};
     const store = {
-      setWidthElem: (key, elem) => {
-        if (elem) {
-          widthElems[key] = elem;
-        } else {
-          delete widthElems[key];
-          delete values[key];
-        }
-      },
-      updateWidths,
-
       get: key => values[key],
       set: (key, value) => {
         if (value !== values[key]) {
@@ -80,18 +104,38 @@ export default compose(
         listeners[key] && listeners[key].forEach(l => l(values[key]));
         setTimeout(updateWidths);
       },
-      listen: (key, listener) => {
-        listener(values[key]);
-        listeners[key] = listeners[key] || [];
-        listeners[key].push(listener);
-        return () => listeners[key].splice(listeners[key].indexOf(listener), 1);
+      watch: (key, listener, onProps, initialProps) => {
+        const getKey = props => (typeof key === 'string' ? key : key(props));
+        let currentKey = getKey(initialProps);
+        let unlisten = listen(currentKey, listener);
+        onProps(props => {
+          const newKey = props && getKey(props);
+          if (newKey !== currentKey) {
+            unlisten();
+            currentKey = newKey;
+            if (currentKey) unlisten = listen(currentKey, listener);
+          }
+        });
       },
-      keys: () => Object.keys(values),
+
+      setWidthElem: (key, elem) => {
+        if (elem) {
+          widthElems[key] = elem;
+        } else {
+          delete widthElems[key];
+          delete values[key];
+        }
+      },
+      updateWidths,
     };
     return props => ({ ...props, store });
   }),
   context('store', ({ store }) => store),
   enclose(({ initialProps, setState }) => {
+    if (initialProps.query) {
+      initStore(initialProps.store, initialProps.query);
+    }
+
     let query = initialProps.query || [];
     let unsubscribe;
     const updateQuery = () => {

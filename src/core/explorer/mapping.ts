@@ -35,8 +35,6 @@ export const fieldToRows = (
               name: '#1',
               type: type,
               path: newPath,
-              start: f.start || 0,
-              end: f.end,
               firstCol: i === 0 && !path,
             },
             {
@@ -44,7 +42,6 @@ export const fieldToRows = (
               type: newType,
               path: newPath,
               span: newRows[0].reduce((res, g) => res + (g.span || 1), 0),
-              filter: f.filter,
             },
             {
               name: '#2',

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
-import { branch, compose, context, enclose, methodWrap, pure } from 'mishmash';
+import { branch, compose, context, enclose, pure } from 'mishmash';
 import { root } from 'common';
 
-import { colors, icons } from '../styles';
+import { colors, icons } from '../../styles';
 
 import AddField from './AddField';
 import FilterField from './FilterField';
@@ -29,36 +29,23 @@ export default compose(
   context('store'),
   branch(
     ({ live, fetching }) => !live && !fetching,
-    enclose(() => {
-      const methods = methodWrap();
-      return props => ({
-        ...props,
-        ...methods({
-          setWidthElem: elem =>
-            props.store.setWidthElem(`${props.path}_${props.name}_width`, elem),
-        }),
-      });
-    }),
+    enclose(({ methods }) => props => ({
+      ...props,
+      ...methods({
+        setWidthElem: elem =>
+          props.store.setWidthElem(`${props.path}_${props.name}_width`, elem),
+      }),
+    })),
   ),
   branch(
     ({ live }) => live,
     enclose(({ initialProps, onProps, setState }) => {
-      let key;
-      let unlisten;
-      const update = props => {
-        if (props) {
-          const newKey = `${props.path}_${props.name}_width`;
-          if (newKey !== key) {
-            key = newKey;
-            unlisten && unlisten();
-            unlisten = props.store.listen(key, width => setState({ width }));
-          }
-        } else {
-          unlisten();
-        }
-      };
-      update(initialProps);
-      onProps(update);
+      initialProps.store.watch(
+        props => `${props.path}_${props.name}_width`,
+        width => setState({ width }),
+        onProps,
+        initialProps,
+      );
       return (props, state) => ({ ...props, ...state });
     }),
   ),
@@ -71,11 +58,8 @@ export default compose(
     isList,
     span,
     path,
-    filter,
     sort,
     last,
-    start,
-    end,
     firstCol,
     lastCol,
     rowSpan,
@@ -289,8 +273,6 @@ export default compose(
       {name === '#1' && (
         <PageField
           live={live}
-          start={start}
-          end={end}
           path={path}
           updatePaging={updatePaging}
           active={isPathPaging}
@@ -334,7 +316,6 @@ export default compose(
             <FilterField
               live={live}
               type={type}
-              filter={filter}
               path={path}
               updateFilter={updateFilter}
               active={isPathFilter}

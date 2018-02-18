@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { compose, enclose, map, methodWrap, pure, withSize } from 'mishmash';
+import { compose, enclose, map, pure, withSize } from 'mishmash';
 
 import TableData from './TableData';
-import Header from './Header';
-import HeaderCell from './HeaderCell';
+import Header from './header/Header';
+import HeaderCell from './header/HeaderCell';
 import { dataToRows, fieldToRows } from './mapping';
 
 const DataTable = pure(({ types, fieldRows, dataRows, fetching }) => (
@@ -41,25 +41,13 @@ export default compose(
     dataRows: dataToRows(query, data),
   })),
   withSize('height', 'setHeightElem', ({ height = 0 }) => height),
-  enclose(({ initialProps, onProps, setState }) => {
-    let key;
-    let unlisten;
-    const update = props => {
-      if (props) {
-        const newKey = `${props.index}_table_width`;
-        if (newKey !== key) {
-          key = newKey;
-          unlisten && unlisten();
-          unlisten = props.store.listen(key, width => setState({ width }));
-        }
-      } else {
-        unlisten();
-      }
-    };
-    update(initialProps);
-    onProps(update);
-
-    const methods = methodWrap();
+  enclose(({ initialProps, onProps, setState, methods }) => {
+    initialProps.store.watch(
+      props => `${props.index}_table_width`,
+      width => setState({ width }),
+      onProps,
+      initialProps,
+    );
     return (props, state) => ({
       ...props,
       ...state,
@@ -110,7 +98,7 @@ export default compose(
             position: 'absolute',
             top: 0,
             left: 0,
-            width: 1000000,
+            width: 100000,
             zIndex: 100,
           }}
         >
@@ -139,7 +127,7 @@ export default compose(
               }}
             >
               <div style={{ width, overflow: 'hidden' }}>
-                <div style={{ width: 1000000 }}>
+                <div style={{ width: 100000 }}>
                   <div style={{ display: 'table' }} ref={setSizeElem}>
                     <DataTable
                       types={types}

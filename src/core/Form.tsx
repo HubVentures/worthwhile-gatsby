@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
-import { withHover, Wrap } from 'mishmash';
+import { Use, withHover } from 'mishmash';
 import { Spinner } from 'common-client';
 
 import createForm from './createForm';
@@ -37,7 +37,7 @@ export default createForm(({ blocks, attempted, submit, invalid, button }) => (
     )}
     {blocks && (
       <Div style={{ spacing: 10 }}>
-        <Wrap hoc={withHover}>
+        <Use hoc={withHover}>
           {({ isHovered, hoverProps }) => (
             <Txt
               onClick={submit}
@@ -47,7 +47,7 @@ export default createForm(({ blocks, attempted, submit, invalid, button }) => (
               {button || 'Submit'}
             </Txt>
           )}
-        </Wrap>
+        </Use>
         {invalid &&
           attempted && (
             <Div style={{ layout: 'bar', spacing: 12, margin: '0 auto' }}>

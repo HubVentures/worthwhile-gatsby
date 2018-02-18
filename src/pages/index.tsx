@@ -11,14 +11,14 @@ import styles, { colors } from '../core/styles';
 import * as headerImg from '../img/header.png';
 
 const ApplyForm = compose(
-  enclose(
-    ({ setState }) => (props, state) => ({
+  enclose(({ setState }) => {
+    setState({ complete: false });
+    return (props, state) => ({
       ...props,
       ...state,
       onSubmit: () => setState({ complete: true }),
-    }),
-    { complete: false },
-  ),
+    });
+  }),
   branch(
     ({ complete }) => complete,
     render(() => (

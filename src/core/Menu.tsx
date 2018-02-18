@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Txt } from 'elmnt';
-import { compose, enclose, map, withHover, Wrap } from 'mishmash';
+import { compose, enclose, map, Use, withHover } from 'mishmash';
 import { Link, withWidth } from 'common-client';
 
 import styles from '../core/styles';
@@ -39,17 +39,15 @@ const MenuLink = withHover(
 export default compose(
   withWidth(800),
   map(({ small = true, ...props }) => ({ small, ...props })),
-  enclose(
-    ({ setState }) => {
-      const toggle = () => setState(({ isOpen }) => ({ isOpen: !isOpen }));
-      const setClosed = () => setState({ isOpen: false });
-      return (props, state) => {
-        if (state.isOpen && !props.small) setTimeout(setClosed);
-        return { ...props, ...state, toggle, setClosed };
-      };
-    },
-    { isOpen: false },
-  ),
+  enclose(({ setState }) => {
+    setState({ isOpen: false });
+    const toggle = () => setState(({ isOpen }) => ({ isOpen: !isOpen }));
+    const setClosed = () => setState({ isOpen: false });
+    return (props, state) => {
+      if (state.isOpen && !props.small) setTimeout(setClosed);
+      return { ...props, ...state, toggle, setClosed };
+    };
+  }),
 )(({ isOpen, toggle, setClosed, small, setWidthElem }) => (
   <div
     style={{
@@ -80,7 +78,7 @@ export default compose(
           <img src={logo} style={{ width: 'auto', height: 18 }} />
         </Link>
         {small ? (
-          <Wrap hoc={withHover}>
+          <Use hoc={withHover}>
             {({ isHovered, hoverProps }) => (
               <Div
                 onClick={toggle}
@@ -107,7 +105,7 @@ export default compose(
                 ))}
               </Div>
             )}
-          </Wrap>
+          </Use>
         ) : (
           <Div style={{ layout: 'bar', spacing: 10, float: 'right' }}>
             <MenuLink

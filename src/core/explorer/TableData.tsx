@@ -11,10 +11,11 @@ import { colors } from '../styles';
 import inputStyle from './inputStyle';
 
 const Editable = enclose(({ initialProps, onProps, setState }) => {
-  const unlisten = initialProps.store.listen('editing', (editing = {}) =>
-    setState({ editing }),
+  initialProps.store.watch(
+    'editing',
+    (editing = {}) => setState({ editing }),
+    onProps,
   );
-  onProps(props => !props && unlisten());
   const onChange = value =>
     initialProps.store.update('editing', v => ({ ...v, value }));
   let lastValue = initialProps.store.get('editing').value;
@@ -57,15 +58,16 @@ const Editable = enclose(({ initialProps, onProps, setState }) => {
 export default compose(
   context('store'),
   enclose(({ initialProps, onProps, setState }) => {
-    const unlistens = [
-      initialProps.store.listen('editing', (editing = {}) =>
-        setState({ editing }),
-      ),
-      initialProps.store.listen('initial', (initial = {}) =>
-        setState({ initial }),
-      ),
-    ];
-    onProps(props => !props && unlistens.forEach(u => u()));
+    initialProps.store.watch(
+      'editing',
+      (editing = {}) => setState({ editing }),
+      onProps,
+    );
+    initialProps.store.watch(
+      'initial',
+      (initial = {}) => setState({ initial }),
+      onProps,
+    );
     const startEditing = (key, value) => {
       initialProps.store.set('editing', { key, value });
       initialProps.store.update('initial', (initial = {}) => ({
@@ -91,10 +93,10 @@ export default compose(
     });
   }),
 )(
-  isolate((elem, onUpdate) => {
+  isolate((elem, onProps) => {
     let inputRef = null;
     elem.style.borderTop = '1px solid #ccc';
-    onUpdate(props => {
+    onProps(props => {
       if (props) {
         const rows = d3
           .select(elem)
