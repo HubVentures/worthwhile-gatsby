@@ -33,7 +33,7 @@ export default compose(
       ...props,
       ...methods({
         setWidthElem: elem =>
-          props.store.setWidthElem(`${props.path}_${props.name}_width`, elem),
+          props.store.setWidthElem(`${props.path}_${props.name}`, elem),
       }),
     })),
   ),
@@ -41,7 +41,7 @@ export default compose(
     ({ live }) => live,
     enclose(({ initialProps, onProps, setState }) => {
       initialProps.store.watch(
-        props => `${props.path}_${props.name}_width`,
+        props => `${props.path}_${props.name}`,
         width => setState({ width }),
         onProps,
         initialProps,

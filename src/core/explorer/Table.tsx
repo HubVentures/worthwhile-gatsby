@@ -43,18 +43,26 @@ export default compose(
   withSize('height', 'setHeightElem', ({ height = 0 }) => height),
   enclose(({ initialProps, onProps, setState, methods }) => {
     initialProps.store.watch(
-      props => `${props.index}_table_width`,
+      props => `${props.index}`,
       width => setState({ width }),
       onProps,
       initialProps,
     );
+    let elem;
+    const noScrollEvent = () => (elem.scrollLeft = 0);
+    const setNoScrollElem = e => {
+      if (elem) elem.removeEventListener('scroll', noScrollEvent);
+      elem = e;
+      if (elem) elem.addEventListener('scroll', noScrollEvent);
+    };
     return (props, state) => ({
       ...props,
       ...state,
+      setNoScrollElem,
       ...methods({
         setSizeElem: elem => {
           props.setHeightElem(elem);
-          props.store.setWidthElem(`${props.index}_table_width`, elem);
+          props.store.setWidthElem(`${props.index}`, elem);
         },
       }),
     });
@@ -70,6 +78,7 @@ export default compose(
     updatePaging,
     clickAdd,
     clickRemove,
+    setNoScrollElem,
     height,
     width,
     setSizeElem,
@@ -92,6 +101,7 @@ export default compose(
           height: '100%',
           overflow: 'hidden',
         }}
+        ref={setNoScrollElem}
       >
         <div
           style={{

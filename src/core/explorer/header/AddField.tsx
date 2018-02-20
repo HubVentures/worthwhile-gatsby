@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
 import {
+  clickOutside,
   compose,
   enclose,
   fitScreen,
-  Outside,
   renderLifted,
   withHover,
 } from 'mishmash';
@@ -63,9 +63,14 @@ export default compose(
         props.clickAdd(path, props.type, field);
         props.setActive(null, true);
       },
-      onClickOutside: () => props.setActive(null, true),
     }),
   })),
+  clickOutside(props => {
+    if (props.focused) {
+      props.setActive(null, true);
+      return true;
+    }
+  }, 'setClickElem'),
   renderLifted(
     fitScreen(({ liftBounds: { top, left, height, width } }) => ({
       base: { top: top + height, left: left + width * 0.5 - 100, width: 203 },
@@ -75,7 +80,7 @@ export default compose(
         types,
         type,
         onClickItem,
-        onClickOutside,
+        setClickElem,
         setInnerElem,
         fitStyle,
         fitSmall,
@@ -89,21 +94,23 @@ export default compose(
               bottom: 0,
               left: 0,
               background: fitSmall ? 'rgba(0,0,0,0.5)' : 'none',
+              zIndex: 99999,
             }}
           />
-          <Outside
-            onClickOutside={onClickOutside}
+          <div
             style={{
               ...fitStyle,
               boxShadow: fitSmall
                 ? '0 2px 25px rgba(0,0,0,0.5)'
                 : '0 2px 20px 5px rgba(0,0,0,0.4)',
+              zIndex: 99999,
             }}
+            ref={setClickElem}
           >
             <div ref={setInnerElem}>
               <Div style={{ background: 'white', padding: '4px 0' }}>
                 {(type
-                  ? [...Object.keys(root.rgo.schema[type]), 'id']
+                  ? ['id', ...Object.keys(root.rgo.schema[type])]
                   : Object.keys(types)
                 ).map((f, i) => (
                   <Item
@@ -120,7 +127,7 @@ export default compose(
                 ))}
               </Div>
             </div>
-          </Outside>
+          </div>
         </div>
       ),
     ),

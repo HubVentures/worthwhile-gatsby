@@ -88,7 +88,9 @@ export const dataToRows = (
                     ? start + i + 1
                     : getValueString(
                         noUndef(values && values[f]),
-                        (root.rgo.schema[type!][f] as any).scalar,
+                        f === 'id'
+                          ? 'string'
+                          : (root.rgo.schema[type!][f] as any).scalar,
                       ),
               first: first && i === 0,
               firstCol: f === '#0',

@@ -77,10 +77,13 @@ export default compose(
     };
     const stopEditing = () => {
       const { key, value } = initialProps.store.get('editing');
-      root.rgo.set({ key: key.split('.'), value });
       initialProps.store.set('editing', {});
       initialProps.store.update('initial', ({ [key]: v, ...initial }) => {
-        if (v === value) return initial;
+        if (v === value) {
+          root.rgo.set({ key: key.split('.'), value: undefined });
+          return initial;
+        }
+        root.rgo.set({ key: key.split('.'), value });
         return { ...initial, [key]: v };
       });
     };

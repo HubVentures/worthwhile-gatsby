@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Input } from 'elmnt';
-import { compose, context, enclose, Outside } from 'mishmash';
+import { clickOutside, compose, context, enclose } from 'mishmash';
 import { parseFilter } from 'common-client';
 
 import { colors, icons } from '../../styles';
@@ -43,13 +43,13 @@ export default compose(
             props.setActive({ type: 'filter', path: props.path }, true);
             inputElem && inputElem.focus();
           },
-          onClickOutside: e => {
+          onClickOutside: () => {
             if (props.focused) {
-              e.stopPropagation();
               if (!invalid) {
                 props.updateFilter(props.path, filter);
                 props.setActive(null, true);
               }
+              return true;
             }
           },
           onKeyDown: event => {
@@ -64,6 +64,7 @@ export default compose(
       };
     };
   }),
+  clickOutside(props => props.onClickOutside(), 'setClickElem'),
 )(
   ({
     live,
@@ -75,14 +76,14 @@ export default compose(
     onMouseMove,
     onMouseLeave,
     onClick,
-    onClickOutside,
+    setClickElem,
     onKeyDown,
     setInputElem,
   }) => (
-    <Outside
-      onClickOutside={onClickOutside}
+    <div
       onKeyDown={onKeyDown}
       style={{ position: 'relative', margin: -5 }}
+      ref={setClickElem}
     >
       <Div
         style={{
@@ -141,6 +142,6 @@ export default compose(
             }}
           />
         )}
-    </Outside>
+    </div>
   ),
 );

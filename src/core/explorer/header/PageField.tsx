@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Icon, Input } from 'elmnt';
-import { compose, context, enclose, Outside } from 'mishmash';
+import { clickOutside, compose, context, enclose } from 'mishmash';
 
 import { colors, icons } from '../../styles';
 
@@ -64,18 +64,20 @@ export default compose(
               inputElem2 && inputElem2.focus();
             }
           },
-          onClickOutside: e => {
+          onClickOutside: () => {
             if (props.focused) {
-              e.stopPropagation();
               if (!invalid) {
+                props.store.set(`${props.path}_start`, start || 1);
                 props.updatePaging(props.path, start ? start - 1 : 0, end);
                 props.setActive(null, true);
               }
+              return true;
             }
           },
           onKeyDown: event => {
             if (props.focused && event.keyCode === 13) {
               if (!invalid) {
+                props.store.set(`${props.path}_start`, start || 1);
                 props.updatePaging(props.path, start ? start - 1 : 0, end);
                 props.setActive(null, true);
                 (document.activeElement as HTMLElement).blur();
@@ -88,6 +90,7 @@ export default compose(
       };
     };
   }),
+  clickOutside(props => props.onClickOutside(), 'setClickElem'),
 )(
   ({
     live,
@@ -101,16 +104,16 @@ export default compose(
     onMouseMove,
     onMouseLeave,
     onClick,
-    onClickOutside,
+    setClickElem,
     onKeyDown,
     setInputElem1,
     setInputElem2,
   }) => (
     <>
-      <Outside
-        onClickOutside={onClickOutside}
+      <div
         onKeyDown={onKeyDown}
         style={{ position: 'relative', margin: -5, zIndex: focused ? 20 : 6 }}
+        ref={setClickElem}
       >
         <Input
           type="int"
@@ -162,7 +165,7 @@ export default compose(
           }}
           ref={setInputElem2}
         />
-      </Outside>
+      </div>
       {live &&
         !focused && (
           <div

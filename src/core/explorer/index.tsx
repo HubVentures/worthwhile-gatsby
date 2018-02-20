@@ -6,6 +6,8 @@ import { Field, fieldIs } from 'rgo';
 
 import { colors } from '../styles';
 
+import Footer from './Footer';
+import jsonUrl from './jsonUrl';
 import Table from './Table';
 
 const printFilter = (filter: any[] | null, fields: Obj<Field>) => {
@@ -35,7 +37,7 @@ const initStore = (store, fields, type?, path?) =>
     }
     store.set(`${newPath}_start`, (f.start || 0) + 1);
     if (f.end) store.set(`${newPath}_end`, f.end);
-    initStore(store, f.fields || [], newPath);
+    initStore(store, f.fields || [], newType, newPath);
   });
 
 const addAliases = (fields, alias = '') =>
@@ -62,10 +64,12 @@ export default compose(
   enclose(({ setState }) => {
     setState({ loading: true });
     root.rgo.query().then(() => setState({ loading: false }));
-    return (props, { loading }) => ({ ...props, loading });
+    const reset = () =>
+      setState({ isReset: true }, () => setState({ isReset: false }));
+    return (props, state) => ({ ...props, ...state, reset });
   }),
   branch(
-    ({ loading }) => loading,
+    ({ loading, isReset }) => loading || isReset,
     render(() => <Spinner style={{ color: colors.blue }} />),
   ),
   enclose(() => {
@@ -131,12 +135,12 @@ export default compose(
     return props => ({ ...props, store });
   }),
   context('store', ({ store }) => store),
-  enclose(({ initialProps, setState }) => {
-    if (initialProps.query) {
-      initStore(initialProps.store, initialProps.query);
-    }
+  enclose(({ initialProps, onProps, setState }) => {
+    let query = initialProps.query
+      ? JSON.parse(JSON.stringify(initialProps.query))
+      : jsonUrl.parse(location.search.slice(1)) || [];
+    if (query) initStore(initialProps.store, query);
 
-    let query = initialProps.query || [];
     let unsubscribe;
     const updateQuery = () => {
       const aliasQuery = addAliases(query);
@@ -151,6 +155,7 @@ export default compose(
       });
     };
     updateQuery();
+    onProps(props => !props && unsubscribe());
 
     const updateFilter = (path, filter) => {
       const splitPath = path.split('.');
@@ -200,6 +205,7 @@ export default compose(
         fields: query,
       });
       f.start = start;
+      if (!f.start) delete f.start;
       f.end = end;
       if (!f.end) delete f.end;
       updateQuery();
@@ -237,6 +243,35 @@ export default compose(
       updateQuery();
     };
 
+    const clickSave = () => {
+      root.rgo.commit(
+        ...(Object.keys(initialProps.store.get('initial') || {}).map(k =>
+          k.split('.'),
+        ) as [string, string, string][]),
+      );
+      initialProps.store.set('initial', {});
+    };
+    const clickClear = () => {
+      root.rgo.set(
+        ...Object.keys(initialProps.store.get('initial') || {}).map(k => ({
+          key: k.split('.') as [string, string, string],
+          value: undefined,
+        })),
+      );
+      initialProps.store.set('initial', {});
+    };
+    const clickReset = () => {
+      clickClear();
+      initialProps.reset();
+    };
+    const clickPermalink = () => {
+      window.open(
+        `${window.location.protocol}//${
+          window.location.host
+        }/dashboard?${jsonUrl.stringify(query)}`,
+      );
+    };
+
     return (props, state) => ({
       ...props,
       ...state,
@@ -245,6 +280,10 @@ export default compose(
       updatePaging,
       clickAdd,
       clickRemove,
+      clickSave,
+      clickClear,
+      clickReset,
+      clickPermalink,
     });
   }),
   branch(
@@ -263,33 +302,60 @@ export default compose(
     updatePaging,
     clickAdd,
     clickRemove,
+    clickSave,
+    clickClear,
+    clickReset,
+    clickPermalink,
   }) => (
-    <div style={{ height: '100%', whiteSpace: 'nowrap', overflow: 'auto' }}>
-      {Array.from({ length: query.length + 1 }).map((_, i) => (
-        <div
-          style={{
-            display: 'inline-block',
-            verticalAlign: 'top',
-            height: '100%',
-            paddingLeft: i !== 0 && 30,
-          }}
-          key={i}
-        >
-          <Table
-            store={store}
-            types={types}
-            index={i}
-            query={query[i] ? [query[i]] : []}
-            data={data}
-            fetching={fetching}
-            updateFilter={updateFilter}
-            clickSort={clickSort}
-            updatePaging={updatePaging}
-            clickAdd={clickAdd}
-            clickRemove={clickRemove}
-          />
-        </div>
-      ))}
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        paddingBottom: 61,
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          whiteSpace: 'nowrap',
+          overflow: 'auto',
+        }}
+      >
+        {Array.from({ length: query.length + 1 }).map((_, i) => (
+          <div
+            style={{
+              display: 'inline-block',
+              verticalAlign: 'top',
+              height: '100%',
+              paddingLeft: i !== 0 && 25,
+            }}
+            key={i}
+          >
+            <Table
+              store={store}
+              types={types}
+              index={i}
+              query={query[i] ? [query[i]] : []}
+              data={data}
+              fetching={fetching}
+              updateFilter={updateFilter}
+              clickSort={clickSort}
+              updatePaging={updatePaging}
+              clickAdd={clickAdd}
+              clickRemove={clickRemove}
+            />
+          </div>
+        ))}
+      </div>
+      <Footer
+        store={store}
+        clickSave={clickSave}
+        clickClear={clickClear}
+        clickReset={clickReset}
+        clickPermalink={clickPermalink}
+      />
     </div>
   ),
 );
