@@ -7,11 +7,11 @@ import { colors, icons } from '../../styles';
 export default enclose(({ methods }) => ({ path, ...props }) => ({
   ...props,
   ...methods({
-    onMouseMove: () => props.setActive({ type: 'remove', path }),
-    onMouseLeave: () => props.setActive(null),
+    onMouseMove: () => props.context.setActive({ type: 'remove', path }),
+    onMouseLeave: () => props.context.setActive(null),
     onClick: () => {
-      props.clickRemove(path);
-      props.setActive(null);
+      props.context.query.remove(path);
+      props.context.setActive(null);
     },
   }),
 }))(({ relation, active, onMouseMove, onMouseLeave, onClick }) => (

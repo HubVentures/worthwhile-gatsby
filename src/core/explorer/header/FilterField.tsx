@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Input } from 'elmnt';
-import { clickOutside, compose, context, enclose } from 'mishmash';
-import { parseFilter } from 'common-client';
+import { clickOutside, compose, enclose } from 'mishmash';
 
 import { colors, icons } from '../../styles';
 
@@ -12,13 +11,12 @@ const textStyle = {
 };
 
 export default compose(
-  context('store'),
   enclose(({ initialProps, onProps, setState, methods }) => {
     let inputElem;
     const setInputElem = e => (inputElem = e);
 
     let filter;
-    initialProps.store.watch(
+    initialProps.context.store.watch(
       props => `${props.path}_filter`,
       (text = '') => setState({ text }),
       onProps,
@@ -33,29 +31,29 @@ export default compose(
         invalid,
         ...methods({
           setText: text => {
-            filter = parseFilter(text, props.type);
-            props.store.set(`${props.path}_filter`, text);
+            filter = props.context.parseFilter(text, props.type);
+            props.context.store.set(`${props.path}_filter`, text);
           },
           onMouseMove: () =>
-            props.setActive({ type: 'filter', path: props.path }),
-          onMouseLeave: () => props.setActive(null),
+            props.context.setActive({ type: 'filter', path: props.path }),
+          onMouseLeave: () => props.context.setActive(null),
           onClick: () => {
-            props.setActive({ type: 'filter', path: props.path }, true);
+            props.context.setActive({ type: 'filter', path: props.path }, true);
             inputElem && inputElem.focus();
           },
           onClickOutside: () => {
             if (props.focused) {
               if (!invalid) {
-                props.updateFilter(props.path, filter);
-                props.setActive(null, true);
+                props.context.query.filter(props.path, filter);
+                props.context.setActive(null, true);
               }
               return true;
             }
           },
           onKeyDown: event => {
             if (props.focused && event.keyCode === 13 && !invalid) {
-              props.updateFilter(props.path, filter);
-              props.setActive(null, true);
+              props.context.query.filter(props.path, filter);
+              props.context.setActive(null, true);
               (document.activeElement as HTMLElement).blur();
             }
           },

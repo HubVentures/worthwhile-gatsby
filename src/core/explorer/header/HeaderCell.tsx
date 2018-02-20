@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
-import { branch, compose, context, enclose, pure } from 'mishmash';
-import { root } from 'common';
+import { branch, compose, enclose, pure } from 'mishmash';
 
 import { colors, icons } from '../../styles';
 
@@ -17,31 +16,20 @@ const textStyle = {
   color: colors.black,
 };
 
-const getFieldName = (types, type, field) => {
-  if (field === 'id') return 'Id';
-  if (types[field]) return types[field];
-  if (!type || !root.rgo.schema[type][field]) return field;
-  return root.rgo.schema[type][field].meta.name || field;
-};
-
 export default compose(
   pure,
-  context('store'),
   branch(
-    ({ live, fetching }) => !live && !fetching,
+    ({ live }) => !live,
     enclose(({ methods }) => props => ({
       ...props,
       ...methods({
         setWidthElem: elem =>
-          props.store.setWidthElem(`${props.path}_${props.name}`, elem),
+          props.context.setWidthElem(`${props.path}_${props.name}_width`, elem),
       }),
     })),
-  ),
-  branch(
-    ({ live }) => live,
     enclose(({ initialProps, onProps, setState }) => {
-      initialProps.store.watch(
-        props => `${props.path}_${props.name}`,
+      initialProps.context.store.watch(
+        props => `${props.path}_${props.name}_width`,
         width => setState({ width }),
         onProps,
         initialProps,
@@ -51,8 +39,8 @@ export default compose(
   ),
 )(
   ({
-    live,
-    types,
+    context,
+    rowSpan,
     name,
     type,
     isList,
@@ -62,13 +50,8 @@ export default compose(
     last,
     firstCol,
     lastCol,
-    rowSpan,
     alt,
-    updateFilter,
-    clickSort,
-    updatePaging,
-    clickAdd,
-    clickRemove,
+    live,
     focused,
     isPathAdd,
     isLastPathAdd,
@@ -78,7 +61,6 @@ export default compose(
     isChildRemove,
     isPathPaging,
     isPathFilter,
-    setActive,
     color,
     setWidthElem,
     width,
@@ -157,13 +139,11 @@ export default compose(
                 }}
               >
                 <AddField
-                  types={types}
+                  context={context}
                   wide={!name}
                   type={type}
                   path={path}
-                  clickAdd={clickAdd}
                   active={isPathAdd}
-                  setActive={setActive}
                   focused={isPathAdd && focused}
                   empty={name === ''}
                 />
@@ -182,12 +162,10 @@ export default compose(
                 }}
               >
                 <AddField
-                  types={types}
+                  context={context}
                   type={type}
                   path={last}
-                  clickAdd={clickAdd}
                   active={isLastPathAdd}
-                  setActive={setActive}
                   focused={isLastPathAdd && focused}
                 />
               </div>
@@ -220,12 +198,11 @@ export default compose(
                 }}
               >
                 <SortField
+                  context={context}
                   sort={sort}
                   path={path}
-                  clickSort={clickSort}
                   active={isPathSort}
                   activeSibling={isSiblingSort}
-                  setActive={setActive}
                 />
               </div>
             )}
@@ -260,11 +237,10 @@ export default compose(
                 }}
               >
                 <RemoveField
+                  context={context}
                   relation={span}
                   path={path}
-                  clickRemove={clickRemove}
                   active={isPathRemove}
-                  setActive={setActive}
                 />
               </div>
             )}
@@ -272,12 +248,11 @@ export default compose(
       )}
       {name === '#1' && (
         <PageField
+          context={context}
           live={live}
           path={path}
-          updatePaging={updatePaging}
           active={isPathPaging}
           focused={isPathPaging && focused}
-          setActive={setActive}
         />
       )}
       {!name.startsWith('#') && (
@@ -309,18 +284,17 @@ export default compose(
             >
               {name === ''
                 ? path === '0' ? 'Explore' : 'Add field'
-                : getFieldName(types, type, name)}
+                : context.getFieldName(context.types, type, name)}
             </Txt>
           )}
           {span && (
             <FilterField
+              context={context}
               live={live}
               type={type}
               path={path}
-              updateFilter={updateFilter}
               active={isPathFilter}
               focused={isPathFilter && focused}
-              setActive={setActive}
             />
           )}
         </Div>

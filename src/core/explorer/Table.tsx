@@ -1,49 +1,19 @@
 import * as React from 'react';
-import { compose, enclose, map, pure, withSize } from 'mishmash';
+import { compose, enclose, map, pure, Use, withSize } from 'mishmash';
 
-import TableData from './TableData';
-import Header from './header/Header';
-import HeaderCell from './header/HeaderCell';
-import { dataToRows, fieldToRows } from './mapping';
-
-const DataTable = pure(({ types, fieldRows, dataRows, fetching }) => (
-  <table
-    style={{
-      borderCollapse: 'separate',
-      borderSpacing: 0,
-      tableLayout: 'fixed',
-    }}
-  >
-    <thead>
-      {fieldRows.map((row, i) => (
-        <tr key={i}>
-          {row.map(d => (
-            <HeaderCell
-              types={types}
-              {...d}
-              rowSpan={d.span ? 1 : fieldRows.length - i}
-              fetching={fetching}
-              key={`${d.path}_${d.name}`}
-            />
-          ))}
-        </tr>
-      ))}
-    </thead>
-    <TableData dataRows={dataRows} />
-  </table>
-));
+import Body from './body';
+import Header, { fieldToRows } from './header';
 
 export default compose(
   pure,
-  map(({ query, data, ...props }) => ({
+  map(props => ({
     ...props,
-    fieldRows: fieldToRows({ fields: query }, null, '', props.index),
-    dataRows: dataToRows(query, data),
+    fieldRows: fieldToRows({ fields: props.query }, null, '', props.index),
   })),
   withSize('height', 'setHeightElem', ({ height = 0 }) => height),
   enclose(({ initialProps, onProps, setState, methods }) => {
-    initialProps.store.watch(
-      props => `${props.index}`,
+    initialProps.context.store.watch(
+      props => `table_${props.index}_width`,
       width => setState({ width }),
       onProps,
       initialProps,
@@ -62,22 +32,18 @@ export default compose(
       ...methods({
         setSizeElem: elem => {
           props.setHeightElem(elem);
-          props.store.setWidthElem(`${props.index}`, elem);
+          props.context.setWidthElem(`table_${props.index}_width`, elem);
         },
       }),
     });
   }),
 )(
   ({
-    types,
-    fieldRows,
-    dataRows,
+    context,
+    query,
     fetching,
-    updateFilter,
-    clickSort,
-    updatePaging,
-    clickAdd,
-    clickRemove,
+    data,
+    fieldRows,
     setNoScrollElem,
     height,
     width,
@@ -105,27 +71,8 @@ export default compose(
       >
         <div
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: 100000,
-            zIndex: 100,
-          }}
-        >
-          <Header
-            types={types}
-            fieldRows={fieldRows}
-            updateFilter={updateFilter}
-            clickSort={clickSort}
-            updatePaging={updatePaging}
-            clickAdd={clickAdd}
-            clickRemove={clickRemove}
-          />
-        </div>
-        <div
-          style={{
             height: '100%',
-            paddingTop: fieldRows.length * 33 + 2,
+            paddingTop: fieldRows.length * 33 + 1,
             overflow: 'hidden',
           }}
         >
@@ -133,18 +80,32 @@ export default compose(
             <div
               style={{
                 height: '100%',
-                marginTop: -(fieldRows.length * 33 + 2),
+                marginTop: -(fieldRows.length * 33 + 1),
               }}
             >
               <div style={{ width, overflow: 'hidden' }}>
                 <div style={{ width: 100000 }}>
                   <div style={{ display: 'table' }} ref={setSizeElem}>
-                    <DataTable
-                      types={types}
+                    <Use
+                      hoc={pure}
+                      context={context}
+                      query={query}
+                      data={data}
                       fieldRows={fieldRows}
-                      dataRows={dataRows}
-                      fetching={fetching}
-                    />
+                    >
+                      {({ context, query, data, fieldRows }) => (
+                        <table
+                          style={{
+                            borderCollapse: 'separate',
+                            borderSpacing: 0,
+                            tableLayout: 'fixed',
+                          }}
+                        >
+                          <Header context={context} fieldRows={fieldRows} />
+                          <Body context={context} query={query} data={data} />
+                        </table>
+                      )}
+                    </Use>
                   </div>
                 </div>
               </div>
@@ -162,6 +123,18 @@ export default compose(
               )}
             </div>
           </div>
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 100000,
+          }}
+        >
+          <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <Header context={context} fieldRows={fieldRows} live />
+          </table>
         </div>
       </div>
     </div>

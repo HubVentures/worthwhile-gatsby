@@ -1,6 +1,10 @@
 import * as React from 'react';
 import { Div, Icon, Txt } from 'elmnt';
 import { enclose, Use, withHover } from 'mishmash';
+import { root } from 'common';
+
+import download from './download';
+import jsonUrl from './jsonUrl';
 
 import { colors, icons } from '../styles';
 
@@ -32,14 +36,51 @@ const Button = ({ onClick = undefined, style, children }) => (
   </Use>
 );
 
-export default enclose(({ initialProps, onProps, setState }) => {
-  initialProps.store.watch(
+export default enclose(({ initialProps, onProps, setState, methods }) => {
+  initialProps.context.store.watch(
     'initial',
     (initial = {}) => setState({ editing: Object.keys(initial).length > 0 }),
     onProps,
   );
-  return (props, state) => ({ ...props, ...state });
-})(({ editing, clickSave, clickClear, clickReset, clickPermalink }) => (
+  const clear = () => {
+    root.rgo.set(
+      ...Object.keys(initialProps.store.get('initial') || {}).map(k => ({
+        key: k.split('.') as [string, string, string],
+        value: undefined,
+      })),
+    );
+    initialProps.store.set('initial', {});
+  };
+  return (props, state) => ({
+    ...props,
+    ...state,
+    ...methods({
+      save: () => {
+        root.rgo.commit(
+          ...(Object.keys(initialProps.store.get('initial') || {}).map(k =>
+            k.split('.'),
+          ) as [string, string, string][]),
+        );
+        initialProps.store.set('initial', {});
+      },
+      clear,
+      reset: () => {
+        clear();
+        initialProps.context.reset();
+      },
+      permalink: () => {
+        window.open(
+          `${window.location.protocol}//${
+            window.location.host
+          }/dashboard?${jsonUrl.stringify(props.query)}`,
+        );
+      },
+      download: () => {
+        download(props.context, props.query, props.data);
+      },
+    }),
+  });
+})(({ reset, download, permalink, save, clear, editing }) => (
   <div
     style={{
       position: 'absolute',
@@ -51,11 +92,13 @@ export default enclose(({ initialProps, onProps, setState }) => {
       border: '2px solid #ccc',
     }}
   >
-    <Button onClick={clickReset} style={{ float: 'left' }}>
+    <Button onClick={reset} style={{ float: 'left' }}>
       Reset
     </Button>
-    <Button style={{ float: 'left' }}>Download</Button>
-    <Button onClick={clickPermalink} style={{ float: 'left' }}>
+    <Button onClick={download} style={{ float: 'left' }}>
+      Download
+    </Button>
+    <Button onClick={permalink} style={{ float: 'left' }}>
       Permalink
     </Button>
 
@@ -64,7 +107,7 @@ export default enclose(({ initialProps, onProps, setState }) => {
         <Use hoc={withHover}>
           {({ hoverProps, isHovered }) => (
             <Div
-              onClick={clickSave}
+              onClick={save}
               {...hoverProps}
               style={{
                 layout: 'bar',
@@ -99,7 +142,7 @@ export default enclose(({ initialProps, onProps, setState }) => {
         <Use hoc={withHover}>
           {({ hoverProps, isHovered }) => (
             <Div
-              onClick={clickClear}
+              onClick={clear}
               {...hoverProps}
               style={{
                 layout: 'bar',

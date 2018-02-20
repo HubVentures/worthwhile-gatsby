@@ -1,4 +1,4 @@
-import { colors } from '../styles';
+import { colors } from '../../styles';
 
 export default {
   position: 'relative' as 'relative',

@@ -7,9 +7,9 @@ import { colors, icons } from '../../styles';
 export default enclose(({ methods }) => ({ path, ...props }) => ({
   ...props,
   ...methods({
-    onMouseMove: () => props.setActive({ type: 'sort', path }),
-    onMouseLeave: () => props.setActive(null),
-    onClick: () => props.clickSort(path),
+    onMouseMove: () => props.context.setActive({ type: 'sort', path }),
+    onMouseLeave: () => props.context.setActive(null),
+    onClick: () => props.context.query.sort(path),
   }),
 }))(({ sort, active, activeSibling, onMouseMove, onMouseLeave, onClick }) => (
   <>

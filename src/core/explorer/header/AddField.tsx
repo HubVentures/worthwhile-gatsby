@@ -18,20 +18,13 @@ const textStyle = {
   color: colors.black,
 };
 
-const getFieldName = (types, type, field) => {
-  if (field === 'id') return 'Id';
-  if (types[field]) return types[field];
-  if (!type || !root.rgo.schema[type][field]) return field;
-  return root.rgo.schema[type][field].meta.name || field;
-};
-
 const Item = compose(
   enclose(({ methods }) => props => ({
     ...props,
     ...methods({ onClick: () => props.onClick(props.field) }),
   })),
   withHover,
-)(({ types, type, field, relation, onClick, hoverProps, isHovered }) => (
+)(({ context, type, field, relation, onClick, hoverProps, isHovered }) => (
   <Txt
     onClick={onClick}
     {...hoverProps}
@@ -48,7 +41,7 @@ const Item = compose(
         : {}),
     }}
   >
-    {getFieldName(types, type, field)}
+    {context.getFieldName(context.types, type, field)}
   </Txt>
 ));
 
@@ -56,18 +49,18 @@ export default compose(
   enclose(({ methods }) => ({ path, ...props }) => ({
     ...props,
     ...methods({
-      onMouseMove: () => props.setActive({ type: 'add', path }),
-      onMouseLeave: () => props.setActive(null),
-      onClick: () => props.setActive({ type: 'add', path }, true),
+      onMouseMove: () => props.context.setActive({ type: 'add', path }),
+      onMouseLeave: () => props.context.setActive(null),
+      onClick: () => props.context.setActive({ type: 'add', path }, true),
       onClickItem: field => {
-        props.clickAdd(path, props.type, field);
-        props.setActive(null, true);
+        props.context.query.add(path, props.type, field);
+        props.context.setActive(null, true);
       },
     }),
   })),
   clickOutside(props => {
     if (props.focused) {
-      props.setActive(null, true);
+      props.context.setActive(null, true);
       return true;
     }
   }, 'setClickElem'),
@@ -77,7 +70,7 @@ export default compose(
       gap: 4,
     }))(
       ({
-        types,
+        context,
         type,
         onClickItem,
         setClickElem,
@@ -111,10 +104,10 @@ export default compose(
               <Div style={{ background: 'white', padding: '4px 0' }}>
                 {(type
                   ? ['id', ...Object.keys(root.rgo.schema[type])]
-                  : Object.keys(types)
+                  : Object.keys(context.types)
                 ).map((f, i) => (
                   <Item
-                    types={types}
+                    context={context}
                     type={type}
                     field={f}
                     relation={

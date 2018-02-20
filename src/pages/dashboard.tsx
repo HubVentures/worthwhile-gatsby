@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Helmet from 'react-helmet';
 
-import Explorer from '../core/explorer';
+import Explorer from '../core/explore';
 
 window.onbeforeunload = () => 'Changes that you made may not be saved.';
 
@@ -19,6 +19,7 @@ export default () => (
         // query={[
         //   {
         //     name: 'befrienders',
+        //     end: 10,
         //     fields: ['firstname', 'lastname', 'address'],
         //   },
         // ]}
