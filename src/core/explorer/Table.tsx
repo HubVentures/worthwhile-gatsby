@@ -1,15 +1,46 @@
 import * as React from 'react';
-import { compose, enclose, map, pure, Use, withSize } from 'mishmash';
+import { compose, enclose, map, pure, restyle, Use, withSize } from 'mishmash';
 
 import Body from './body';
 import Header, { fieldToRows } from './header';
 
 export default compose(
   pure,
-  map(props => ({
-    ...props,
-    fieldRows: fieldToRows({ fields: props.query }, null, '', props.index),
-  })),
+  map(
+    restyle({
+      base: null,
+      div: [
+        ['filter', 'borderRight', 'borderBottom', 'borderLeft'],
+        ['scale', { borderWidth: 2 }],
+      ],
+      pad: [
+        [
+          'scale',
+          {
+            height: {
+              fontSize: 1,
+              borderTopWidth: 1,
+              paddingTop: 1,
+              paddingBottom: 1,
+            },
+            extra: {
+              borderBottomWidth: 1,
+            },
+          },
+        ],
+      ],
+    }),
+    props => ({
+      ...props,
+      fieldRows: fieldToRows(
+        props.context,
+        { fields: props.query },
+        null,
+        '',
+        props.index,
+      ),
+    }),
+  ),
   withSize('height', 'setHeightElem', ({ height = 0 }) => height),
   enclose(({ initialProps, onProps, setState, methods }) => {
     initialProps.context.store.watch(
@@ -48,16 +79,15 @@ export default compose(
     height,
     width,
     setSizeElem,
+    style,
   }) => (
     <div
       style={{
         position: 'relative',
-        height: height + 2,
-        maxHeight: '100%',
-        borderLeft: '2px solid #ccc',
-        borderRight: '2px solid #ccc',
-        borderBottom: '2px solid #ccc',
         visibility: height ? 'visible' : 'hidden',
+        maxHeight: '100%',
+        height: height + style.div.borderBottomWidth,
+        ...style.div,
       }}
     >
       <div
@@ -72,7 +102,7 @@ export default compose(
         <div
           style={{
             height: '100%',
-            paddingTop: fieldRows.length * 33 + 1,
+            paddingTop: fieldRows.length * style.pad.height + style.pad.extra,
             overflow: 'hidden',
           }}
         >
@@ -80,7 +110,10 @@ export default compose(
             <div
               style={{
                 height: '100%',
-                marginTop: -(fieldRows.length * 33 + 1),
+                marginTop: -(
+                  fieldRows.length * style.pad.height +
+                  style.pad.extra
+                ),
               }}
             >
               <div style={{ width, overflow: 'hidden' }}>
@@ -101,8 +134,17 @@ export default compose(
                             tableLayout: 'fixed',
                           }}
                         >
-                          <Header context={context} fieldRows={fieldRows} />
-                          <Body context={context} query={query} data={data} />
+                          <Header
+                            context={context}
+                            fieldRows={fieldRows}
+                            style={style.base}
+                          />
+                          <Body
+                            context={context}
+                            query={query}
+                            data={data}
+                            style={style.base}
+                          />
                         </table>
                       )}
                     </Use>
@@ -133,7 +175,12 @@ export default compose(
           }}
         >
           <table style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-            <Header context={context} fieldRows={fieldRows} live />
+            <Header
+              context={context}
+              fieldRows={fieldRows}
+              live
+              style={style.base}
+            />
           </table>
         </div>
       </div>

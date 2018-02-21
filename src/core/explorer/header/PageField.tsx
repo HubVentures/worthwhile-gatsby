@@ -1,15 +1,8 @@
 import * as React from 'react';
-import { Icon, Input } from 'elmnt';
-import { clickOutside, compose, enclose } from 'mishmash';
+import { css, Icon, Input } from 'elmnt';
+import { clickOutside, compose, enclose, map, restyle } from 'mishmash';
 
-import { colors, icons } from '../../styles';
-
-const textStyle = {
-  fontFamily: 'Ubuntu, sans-serif',
-  fontSize: 12,
-  color: '#bbb',
-  fontWeight: 'bold' as 'bold',
-};
+import icons from '../icons';
 
 export default compose(
   enclose(({ initialProps, onProps, setState, methods }) => {
@@ -104,6 +97,45 @@ export default compose(
       };
     };
   }),
+  map(
+    restyle(['active', 'focused', 'invalid'], (active, focused, invalid) => ({
+      base: {
+        input: [
+          [
+            'mergeKeys',
+            { input: true, hover: active, focus: focused, invalid },
+          ],
+        ],
+      },
+    })),
+    restyle(['focused'], focused => ({
+      input: {
+        div: [
+          ['scale', { margin: { padding: -1 } }],
+          ['filter', 'margin'],
+          ['merge', { position: 'relative', zIndex: focused ? 20 : 6 }],
+        ],
+        text: [
+          ['filter', ...css.groups.text, 'padding', 'background'],
+          ['scale', { minWidth: { fontSize: 2 } }],
+          ['merge', { display: 'inline-block', verticalAlign: 'top' }],
+        ],
+        arrow: [
+          ['mergeKeys', 'connect'],
+          [
+            'scale',
+            {
+              fontSize: 0.9,
+              paddingTop: 0,
+              paddingBottom: 0,
+              minWidth: { fontSize: 2 },
+            },
+          ],
+          ['filter', 'fontSize', 'color', 'padding', 'minWidth'],
+        ],
+      },
+    })),
+  ),
   clickOutside(props => props.onClickOutside(), 'setClickElem'),
 )(
   ({
@@ -112,8 +144,6 @@ export default compose(
     end,
     onChangeStart,
     onChangeEnd,
-    invalid,
-    active,
     focused,
     onMouseMove,
     onMouseLeave,
@@ -122,61 +152,23 @@ export default compose(
     onKeyDown,
     setInputElem1,
     setInputElem2,
+    style,
   }) => (
     <>
-      <div
-        onKeyDown={onKeyDown}
-        style={{ position: 'relative', margin: -5, zIndex: focused ? 20 : 6 }}
-        ref={setClickElem}
-      >
+      <div onKeyDown={onKeyDown} style={style.div} ref={setClickElem}>
         <Input
           type="int"
           value={start}
           onChange={onChangeStart}
-          style={{
-            ...textStyle,
-            color: focused
-              ? colors.white
-              : active ? colors.blue : 'rgba(0,0,0,0.3)',
-            padding: 5,
-            background: focused
-              ? invalid ? colors.red : colors.blue
-              : active && 'rgba(0,0,0,0.1)',
-            display: 'inline-block',
-            verticalAlign: 'top',
-            minWidth: 25,
-          }}
+          style={style.text}
           ref={setInputElem1}
         />
-        <Icon
-          {...icons.down}
-          style={{
-            color:
-              focused || active
-                ? invalid ? colors.red : colors.blue
-                : 'rgba(0,0,0,0.3)',
-            fontSize: 11,
-            padding: '0 5px',
-            minWidth: 25,
-          }}
-        />
+        <Icon {...icons.down} style={style.arrow} />
         <Input
           type="int"
           value={end}
           onChange={onChangeEnd}
-          style={{
-            ...textStyle,
-            color: focused
-              ? colors.white
-              : active ? colors.blue : 'rgba(0,0,0,0.3)',
-            padding: 5,
-            background: focused
-              ? invalid ? colors.red : colors.blue
-              : active && 'rgba(0,0,0,0.1)',
-            display: 'inline-block',
-            verticalAlign: 'top',
-            minWidth: 25,
-          }}
+          style={style.text}
           ref={setInputElem2}
         />
       </div>
@@ -188,10 +180,10 @@ export default compose(
             onClick={onClick}
             style={{
               position: 'absolute',
-              top: -7,
-              right: 0,
-              bottom: -2,
-              left: -1,
+              top: -style.base.borderTopWidth * 2 - style.icon.radius,
+              right: -style.base.borderRightWidth,
+              bottom: -style.base.borderBottomWidth * 2,
+              left: -style.base.borderLeftWidth,
               zIndex: 6,
               cursor: 'pointer',
               // background: 'rgba(255,0,0,0.1)',

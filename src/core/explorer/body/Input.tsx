@@ -2,8 +2,6 @@ import * as React from 'react';
 import { enclose } from 'mishmash';
 import { Input } from 'elmnt';
 
-import inputStyle from './inputStyle';
-
 export default enclose(({ initialProps, onProps, setState }) => {
   initialProps.store.watch(
     'editing',
@@ -19,13 +17,19 @@ export default enclose(({ initialProps, onProps, setState }) => {
       Object.keys(editing).length > 0 ? (lastValue = editing.value) : lastValue,
     onChange,
   });
-})(({ value, onChange, inputRef, onBlur }) => (
+})(({ value, onChange, inputRef, onBlur, style }) => (
   <div>
     <Input
       type="string"
       value={value}
       onChange={onChange}
-      style={{ ...inputStyle, margin: -1 }}
+      style={{
+        ...style,
+        marginTop: -style.borderTopWidth,
+        marginRight: -style.borderRightWidth,
+        marginBottom: -style.borderBottomWidth,
+        marginLeft: -style.borderLeftWidth,
+      }}
       spellCheck={false}
       rows={0}
     />
@@ -34,12 +38,12 @@ export default enclose(({ initialProps, onProps, setState }) => {
       value={value}
       onChange={onChange}
       style={{
-        ...inputStyle,
+        ...style,
         position: 'absolute',
-        top: -1,
-        left: -1,
-        right: -1,
-        bottom: -1,
+        top: -style.borderTopWidth,
+        right: -style.borderRightWidth,
+        bottom: -style.borderBottomWidth,
+        left: -style.borderLeftWidth,
       }}
       spellCheck={false}
       rows={0}

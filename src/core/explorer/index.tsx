@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { branch, compose, enclose, render } from 'mishmash';
+import { branch, compose, enclose, map, render, restyle } from 'mishmash';
 import { Spinner } from 'common-client';
 import { root } from 'common';
-
-import { colors } from '../styles';
 
 import createQuery from './createQuery';
 import createStore from './createStore';
@@ -46,133 +44,170 @@ const addIds = fields =>
     };
   });
 
-export default config => {
-  return compose(
-    enclose(({ setState }) => {
-      setState({ loading: true });
-      root.rgo.query().then(() => setState({ loading: false }));
-      const reset = () =>
-        setState({ isReset: true }, () => setState({ isReset: false }));
-      return (props, state) => ({ ...props, ...state, reset });
+export default compose(
+  map(
+    restyle({
+      base: [
+        [
+          'numeric',
+          'paddingTop',
+          'paddingRight',
+          'paddingBottom',
+          'paddingLeft',
+        ],
+        [
+          'scale',
+          {
+            borderTopWidth: { borderTopWidth: 0.5, borderBottomWidth: 0.5 },
+            borderRightWidth: { borderLeftWidth: 0.5, borderRightWidth: 0.5 },
+            borderBottomWidth: { borderTopWidth: 0.5, borderBottomWidth: 0.5 },
+            borderLeftWidth: { borderLeftWidth: 0.5, borderRightWidth: 0.5 },
+          },
+        ],
+      ],
+      spinner: [['mergeKeys', 'spinner'], ['filter', 'color']],
+      footer: [
+        [
+          'scale',
+          {
+            height: {
+              fontSize: 1,
+              paddingTop: 1,
+              paddingBottom: 1,
+              borderTopWidth: 2,
+              borderBottomWidth: 2,
+            },
+          },
+        ],
+      ],
     }),
-    branch(
-      ({ loading, isReset }) => loading || isReset,
-      render(() => <Spinner style={{ color: colors.blue }} />),
-    ),
-    enclose(({ initialProps, onProps, setState }) => {
-      const store = createStore();
+  ),
+  enclose(({ setState }) => {
+    setState({ loading: true });
+    root.rgo.query().then(() => setState({ loading: false }));
+    const reset = () =>
+      setState({ isReset: true }, () => setState({ isReset: false }));
+    return (props, state) => ({ ...props, ...state, reset });
+  }),
+  branch(
+    ({ loading, isReset }) => loading || isReset,
+    render(({ style }) => <Spinner style={style.spinner} />),
+  ),
+  enclose(({ initialProps, onProps, setState }) => {
+    const store = createStore();
 
-      const initial =
-        initialProps.query || jsonUrl.parse(location.search.slice(1)) || [];
-      initStore(config.printFilter, store, initial);
-      let unsubscribe;
-      const query = createQuery(initial, q => {
-        const aliasQuery = addAliases(q);
-        setState({ query: aliasQuery });
-        if (unsubscribe) unsubscribe();
-        unsubscribe = root.rgo.query(...addIds(aliasQuery), data => {
-          if (!data) {
-            setState({ fetching: true });
-          } else {
-            setState({ data: { ...data } }, () =>
-              setTimeout(() => setState({ fetching: false })),
-            );
-          }
-        });
-      });
-      onProps(props => !props && unsubscribe());
-
-      const widthElems = {};
-      const setWidthElem = (key, elem) => {
-        if (elem) {
-          widthElems[key] = elem;
+    const initial =
+      initialProps.query || jsonUrl.parse(location.search.slice(1)) || [];
+    initStore(initialProps.config.printFilter, store, initial);
+    let unsubscribe;
+    const query = createQuery(initial, q => {
+      const aliasQuery = addAliases(q);
+      setState({ query: aliasQuery });
+      if (unsubscribe) unsubscribe();
+      unsubscribe = root.rgo.query(...addIds(aliasQuery), data => {
+        if (!data) {
+          setState({ fetching: true });
         } else {
-          delete widthElems[key];
-          store.set(key);
+          setState({ data: { ...data } }, () =>
+            setTimeout(() => setState({ fetching: false })),
+          );
         }
-      };
-      const updateWidths = () => {
-        Object.keys(widthElems).forEach(key =>
-          store.set(key, widthElems[key].getBoundingClientRect().width),
-        );
-      };
-      store.listen('', updateWidths);
-      config.resizer && config.resizer(updateWidths);
+      });
+    });
+    onProps(props => !props && unsubscribe());
 
-      const setActive = (active, focus) => {
-        store.update(
-          'header',
-          (state = {}) =>
-            state.activeFocus && !focus
-              ? state
-              : {
-                  activeFocus: active && focus,
-                  activeType: active && active.type,
-                  activePath: active && active.path,
-                },
-        );
-      };
+    const widthElems = {};
+    const setWidthElem = (key, elem) => {
+      if (elem) {
+        widthElems[key] = elem;
+      } else {
+        delete widthElems[key];
+        store.set(key);
+      }
+    };
+    const updateWidths = () => {
+      Object.keys(widthElems).forEach(key =>
+        store.set(key, widthElems[key].getBoundingClientRect().width),
+      );
+    };
+    store.listen('', () => setTimeout(updateWidths));
+    initialProps.resizer && initialProps.resizer(updateWidths);
 
-      let context;
-      const updateContext = ({ types, reset }) => {
-        context = {
-          ...config,
-          types,
-          reset,
-          store,
-          query,
-          setWidthElem,
-          updateWidths,
-          setActive,
-        };
-      };
-      updateContext(initialProps);
-      onProps(props => props && updateContext(props));
+    const setActive = (active, focus) => {
+      store.update(
+        'header',
+        (state = {}) =>
+          state.activeFocus && !focus
+            ? state
+            : {
+                activeFocus: active && focus,
+                activeType: active && active.type,
+                activePath: active && active.path,
+              },
+      );
+    };
 
-      return (props, state) => ({ ...props, ...state, context });
-    }),
-    branch(
-      ({ query, data }) => !query || !data,
-      render(() => <Spinner style={{ color: colors.blue }} />),
-    ),
-  )(({ context, query, fetching, data }) => (
+    let context;
+    const updateContext = ({ config, types, reset, style }) => {
+      context = {
+        config,
+        types,
+        reset,
+        store,
+        query,
+        setWidthElem,
+        updateWidths,
+        setActive,
+        style,
+      };
+    };
+    updateContext(initialProps);
+    onProps(props => props && updateContext(props));
+
+    return (props, state) => ({ ...props, ...state, context });
+  }),
+  branch(
+    ({ query, data }) => !query || !data,
+    render(({ style }) => <Spinner style={style.spinner} />),
+  ),
+)(({ context, query, fetching, data, style }) => (
+  <div
+    style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      paddingBottom: 25 + style.footer.height,
+    }}
+  >
     <div
       style={{
-        position: 'relative',
         width: '100%',
         height: '100%',
-        paddingBottom: 61,
+        whiteSpace: 'nowrap',
+        overflow: 'auto',
       }}
     >
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          whiteSpace: 'nowrap',
-          overflow: 'auto',
-        }}
-      >
-        {Array.from({ length: query.length + 1 }).map((_, i) => (
-          <div
-            style={{
-              display: 'inline-block',
-              verticalAlign: 'top',
-              height: '100%',
-              paddingLeft: i !== 0 && 25,
-            }}
-            key={i}
-          >
-            <Table
-              context={context}
-              query={query[i] ? [query[i]] : []}
-              fetching={fetching}
-              data={data}
-              index={i}
-            />
-          </div>
-        ))}
-      </div>
-      <Footer context={context} query={query} data={data} />
+      {Array.from({ length: query.length + 1 }).map((_, i) => (
+        <div
+          style={{
+            display: 'inline-block',
+            verticalAlign: 'top',
+            height: '100%',
+            paddingLeft: i !== 0 && 25,
+          }}
+          key={i}
+        >
+          <Table
+            context={context}
+            query={query[i] ? [query[i]] : []}
+            fetching={fetching}
+            data={data}
+            index={i}
+            style={style.base}
+          />
+        </div>
+      ))}
     </div>
-  ));
-};
+    <Footer context={context} query={query} data={data} style={style.footer} />
+  </div>
+));

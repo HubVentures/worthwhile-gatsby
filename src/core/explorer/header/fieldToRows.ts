@@ -1,8 +1,23 @@
 import { root } from 'common';
 
-const fieldToRows = ({ sort = [] as any, fields }, type, path, baseIndex = 0) =>
+const fieldToRows = (
+  context,
+  { sort = [] as any, fields },
+  type,
+  path,
+  baseIndex = 0,
+) =>
   fields.length === 0
-    ? [[{ name: '', type, path: path ? `${path}.${0}` : `${baseIndex}` }]]
+    ? [
+        [
+          {
+            name: '',
+            type,
+            path: path ? `${path}.${0}` : `${baseIndex}`,
+            text: !path && !baseIndex ? 'Explore' : 'Add field',
+          },
+        ],
+      ]
     : fields.reduce(
         (rows, f, i) => {
           const newPath = path ? `${path}.${i}` : `${baseIndex + i}`;
@@ -17,13 +32,14 @@ const fieldToRows = ({ sort = [] as any, fields }, type, path, baseIndex = 0) =>
                 ? 'asc'
                 : sort.includes(`-${f}`) ? 'desc' : null,
               last: i === fields.length - 1 && nextPath,
+              text: context.config.fieldName(f, type),
             });
             return rows;
           }
           const newType = type
             ? (root.rgo.schema[type][f.name] as any).type
             : f.name;
-          const newRows = fieldToRows(f, newType, newPath);
+          const newRows = fieldToRows(context, f, newType, newPath);
           rows[0].push(
             {
               name: '#1',
@@ -36,6 +52,9 @@ const fieldToRows = ({ sort = [] as any, fields }, type, path, baseIndex = 0) =>
               type: newType,
               path: newPath,
               span: newRows[0].reduce((res, g) => res + (g.span || 1), 0),
+              text: type
+                ? context.config.fieldName(f.name, type)
+                : context.types[f.name],
             },
             {
               name: '#2',

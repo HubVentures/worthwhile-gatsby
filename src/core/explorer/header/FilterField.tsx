@@ -1,14 +1,8 @@
 import * as React from 'react';
-import { Div, Icon, Input } from 'elmnt';
-import { clickOutside, compose, enclose } from 'mishmash';
+import { css, Div, Icon, Input } from 'elmnt';
+import { clickOutside, compose, enclose, map, restyle } from 'mishmash';
 
-import { colors, icons } from '../../styles';
-
-const textStyle = {
-  fontFamily: 'Ubuntu, sans-serif',
-  fontSize: 12,
-  color: colors.black,
-};
+import icons from '../icons';
 
 export default compose(
   enclose(({ initialProps, onProps, setState, methods }) => {
@@ -31,7 +25,7 @@ export default compose(
         invalid,
         ...methods({
           setText: text => {
-            filter = props.context.parseFilter(text, props.type);
+            filter = props.context.config.parseFilter(text, props.type);
             props.context.store.set(`${props.path}_filter`, text);
           },
           onMouseMove: () =>
@@ -62,14 +56,55 @@ export default compose(
       };
     };
   }),
+  map(
+    restyle(['active', 'focused', 'invalid'], (active, focused, invalid) => ({
+      base: {
+        input: [
+          [
+            'mergeKeys',
+            { input: true, hover: active, focus: focused, invalid },
+          ],
+        ],
+      },
+    })),
+    restyle(['focused'], focused => ({
+      input: {
+        div: [
+          ['scale', { margin: { padding: -1 } }],
+          ['filter', 'margin', 'background'],
+          ['merge', { position: 'relative' }],
+        ],
+        bar: [
+          ['scale', { minWidth: { fontSize: 5 } }],
+          ['filter', 'minWidth'],
+          [
+            'merge',
+            { layout: 'bar', position: 'relative', zIndex: focused ? 20 : 5 },
+          ],
+        ],
+        filterIcon: [
+          ['scale', { fontSize: 0.8 }],
+          ['filter', 'color', 'fontSize', 'padding'],
+        ],
+        iconWidth: [
+          [
+            'scale',
+            { width: { fontSize: 0.8, paddingLeft: 0.5, paddingRight: 0.5 } },
+          ],
+        ],
+        text: [
+          ['filter', ...css.groups.text, 'padding'],
+          ['scale', { paddingRight: 2 }],
+        ],
+      },
+    })),
+  ),
   clickOutside(props => props.onClickOutside(), 'setClickElem'),
 )(
   ({
     live,
     text,
-    invalid,
     setText,
-    active,
     focused,
     onMouseMove,
     onMouseLeave,
@@ -77,48 +112,19 @@ export default compose(
     setClickElem,
     onKeyDown,
     setInputElem,
+    style,
   }) => (
-    <div
-      onKeyDown={onKeyDown}
-      style={{ position: 'relative', margin: -5 }}
-      ref={setClickElem}
-    >
-      <Div
-        style={{
-          layout: 'bar',
-          background: focused
-            ? invalid ? colors.red : colors.blue
-            : active && 'rgba(0,0,0,0.1)',
-          minWidth: 50,
-          position: 'relative',
-          zIndex: focused ? 20 : 5,
-        }}
-      >
-        <div style={{ width: 20 }}>
-          <Icon
-            {...icons.filter}
-            style={{
-              fontSize: 10,
-              color: focused
-                ? colors.white
-                : active ? colors.blue : 'rgba(0,0,0,0.3)',
-              padding: 5,
-            }}
-          />
+    <div onKeyDown={onKeyDown} style={style.div} ref={setClickElem}>
+      <Div style={style.bar}>
+        <div style={{ width: style.iconWidth.width }}>
+          <Icon {...icons.filter} style={style.filterIcon} />
         </div>
         <Input
           type="string"
           value={text}
           onChange={setText}
           spellCheck={false}
-          style={{
-            ...textStyle,
-            fontWeight: 'bold',
-            color: focused
-              ? colors.white
-              : active ? colors.blue : 'rgba(0,0,0,0.3)',
-            padding: '5px 10px 5px 5px',
-          }}
+          style={style.text}
           ref={setInputElem}
         />
       </Div>
@@ -130,10 +136,19 @@ export default compose(
             onClick={onClick}
             style={{
               position: 'absolute',
-              top: -11,
-              right: -5,
-              bottom: -6,
-              left: -5,
+              top:
+                -(style.base.paddingTop + style.div.marginTop) -
+                style.base.borderTopWidth -
+                style.icon.radius,
+              right:
+                -(style.base.paddingRight + style.div.marginRight) -
+                style.base.borderRightWidth,
+              bottom:
+                -(style.base.paddingBottom + style.div.marginBottom) -
+                style.base.borderBottomWidth,
+              left:
+                -(style.base.paddingLeft + style.div.marginLeft) -
+                style.base.borderLeftWidth,
               cursor: 'pointer',
               // background: 'rgba(255,0,0,0.1)',
               zIndex: 5,

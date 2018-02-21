@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { compose, enclose, isolate } from 'mishmash';
+import { compose, enclose, isolate, map, restyle } from 'mishmash';
 import { root } from 'common';
-import { getValueString } from 'common-client';
+import { css } from 'elmnt';
 
 import { colors } from '../../styles';
 
@@ -11,6 +11,54 @@ import dataToRows from './dataToRows';
 import Input from './Input';
 
 export default compose(
+  map(
+    restyle({
+      base: [
+        ['mergeKeys', 'data'],
+        ['defaults', { fontStyle: 'normal', fontWeight: 'normal' }],
+        [
+          'scale',
+          {
+            paddingTop: { paddingTop: 1, fontSize: 0.5, lineHeight: -0.5 },
+            paddingBottom: {
+              paddingBottom: 1,
+              fontSize: 0.5,
+              lineHeight: -0.5,
+            },
+          },
+        ],
+        [
+          'filter',
+          ...css.groups.text,
+          'padding',
+          'border',
+          'background',
+          'maxWidth',
+        ],
+        [
+          'merge',
+          {
+            position: 'relative',
+            verticalAlign: 'top',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          },
+        ],
+      ],
+      input: [
+        ['mergeKeys', 'data', 'input'],
+        ['scale', { maxWidth: { maxWidth: 1, borderLeftWidth: 1 } }],
+        ['merge', { position: 'relative', zIndex: 200 }],
+      ],
+    }),
+    restyle({
+      base: {
+        null: [['mergeKeys', 'null']],
+        empty: [['mergeKeys', 'empty']],
+        changed: [['mergeKeys', 'changed']],
+      },
+    }),
+  ),
   enclose(({ initialProps, onProps, setState }) => {
     initialProps.context.store.watch(
       'editing',
@@ -44,12 +92,13 @@ export default compose(
         },
       );
     };
-    return ({ context, query, data }, state) => ({
+    return ({ context, query, data, style }, state) => ({
       context,
-      dataRows: dataToRows(query, data),
+      dataRows: dataToRows(context, query, data),
       startEditing,
       stopEditing,
       ...state,
+      style,
     });
   }),
 )(
@@ -87,46 +136,42 @@ export default compose(
         const allCells = cells
           .enter()
           .append('td')
-          .style({
-            position: 'relative',
-            borderStyle: 'solid',
-            borderColor: '#ccc',
-            verticalAlign: 'top',
-            maxWidth: 400,
-            fontFamily: 'Ubuntu, sans-serif',
-            fontSize: 12,
-            lineHeight: '18px',
-            whiteSpace: 'pre-wrap',
-          })
-
           .merge(cells)
+          .datum(d => ({
+            ...d,
+            style:
+              inputRef !== this && Object.keys(props.initial).includes(d.key)
+                ? 'changed'
+                : d.empty
+                  ? 'empty'
+                  : d.field.startsWith('#') || d.value === '-'
+                    ? 'null'
+                    : 'base',
+          }))
+          .style(d => props.style[d.style])
           .style(d => ({
-            fontStyle: 'normal',
-            fontWeight: 'normal',
-            padding: '7px 10px',
-            borderTopWidth: !d.first ? 1 : null,
+            borderTopWidth:
+              (!d.first ? 1 : 0) * props.style.base.borderTopWidth,
+            borderBottomWidth: 0,
             borderLeftWidth:
-              (!d.firstCol && (d.field === '#1' ? 2 : 1)) || null,
-            borderRightWidth: (!d.lastCol && d.field === '#2' && 1) || null,
-            background: d => (d.empty ? '#fafafa' : 'white'),
-            color:
-              d.field.startsWith('#') || d.value === '-'
-                ? '#ccc'
-                : colors.black,
+              ((!d.firstCol && (d.field === '#1' ? 2 : 1)) || 0) *
+              props.style.base.borderLeftWidth,
+            borderRightWidth:
+              ((!d.lastCol && d.field === '#2' && 1) || 0) *
+              props.style.base.borderRightWidth,
           }))
           .attr('rowspan', d => d.span);
 
         allCells
           .filter(({ key }) => key)
           .style({ cursor: 'pointer' })
-          .on('mouseenter', function() {
-            this.style.background = '#eee';
+          .on('mouseenter', function(d) {
+            const s = props.style[d.style];
+            this.style.background =
+              (s.hover && s.hover.background) || s.background;
           })
           .on('mouseleave', function(d) {
-            this.style.background =
-              inputRef !== this && Object.keys(props.initial).includes(d.key)
-                ? '#f4fbff'
-                : 'white';
+            this.style.background = props.style[d.style].background;
           })
           .on('dblclick', function({ key, value }) {
             props.startEditing(key, value);
@@ -145,13 +190,14 @@ export default compose(
                   inputRef={elem => {
                     if (elem && inputRef === this) elem.focus();
                   }}
+                  style={props.style.input}
                 />,
                 this,
               );
             } else {
               ReactDOM.unmountComponentAtNode(this);
               if (props.editing.key === key) {
-                this.textContent = getValueString(
+                this.textContent = props.context.config.printValue(
                   props.editing.value,
                   (root.rgo.schema[type][field] as any).scalar,
                 );
@@ -159,19 +205,6 @@ export default compose(
                 this.textContent = text;
               }
             }
-          });
-
-        allCells
-          .filter(function(d) {
-            return (
-              inputRef !== this && Object.keys(props.initial).includes(d.key)
-            );
-          })
-          .style({
-            color: colors.blue,
-            background: '#f4fbff',
-            fontStyle: 'italic',
-            fontWeight: 'bold',
           });
 
         allCells

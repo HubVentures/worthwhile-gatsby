@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'elmnt';
 import { enclose } from 'mishmash';
 
-import { colors, icons } from '../../styles';
+import icons from '../icons';
 
 export default enclose(({ methods }) => ({ path, ...props }) => ({
   ...props,
@@ -11,21 +11,17 @@ export default enclose(({ methods }) => ({ path, ...props }) => ({
     onMouseLeave: () => props.context.setActive(null),
     onClick: () => props.context.query.sort(path),
   }),
-}))(({ sort, active, activeSibling, onMouseMove, onMouseLeave, onClick }) => (
+}))(({ sort, active, onMouseMove, onMouseLeave, onClick, style }) => (
   <>
     {(sort || active) && (
       <Icon
         {...icons[sort === 'asc' ? 'up' : sort === 'desc' ? 'down' : '']}
         style={{
-          fontSize: sort ? 9 : 7,
-          background: active || activeSibling ? colors.blue : '#aaa',
-          color: colors.white,
-          borderRadius: 10,
-          padding: sort ? 1 : 2,
+          ...style.icon,
           position: 'absolute',
           left: '50%',
-          marginLeft: -6,
-          top: -5,
+          marginLeft: -style.icon.radius,
+          top: -style.icon.radius,
         }}
       />
     )}
@@ -35,7 +31,7 @@ export default enclose(({ methods }) => ({ path, ...props }) => ({
       onClick={onClick}
       style={{
         position: 'absolute',
-        top: -5,
+        top: -style.icon.radius,
         left: 0,
         right: 0,
         bottom: 0,

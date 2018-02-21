@@ -1,7 +1,7 @@
 import { noUndef, root } from 'common';
-import { getValueString } from 'common-client';
 
 const dataToRows = (
+  context,
   fields,
   data,
   type = null as null | string,
@@ -31,7 +31,7 @@ const dataToRows = (
                   ? ''
                   : f.startsWith('#')
                     ? `${start + i + 1}`
-                    : getValueString(
+                    : context.config.printValue(
                         value,
                         f === 'id'
                           ? 'string'
@@ -45,6 +45,7 @@ const dataToRows = (
         ];
       }
       return dataToRows(
+        context,
         [
           initial && j === 0 ? '#0' : '#1',
           ...(f.fields.length === 0 ? [''] : f.fields),

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Div, Icon, Txt } from 'elmnt';
-import { branch, compose, enclose, pure } from 'mishmash';
+import { css, Div, Icon, Txt } from 'elmnt';
+import { branch, compose, enclose, map, pure, restyle } from 'mishmash';
 
-import { colors, icons } from '../../styles';
+import icons from '../icons';
 
 import AddField from './AddField';
 import FilterField from './FilterField';
@@ -10,14 +10,130 @@ import PageField from './PageField';
 import RemoveField from './RemoveField';
 import SortField from './SortField';
 
-const textStyle = {
-  fontFamily: 'Ubuntu, sans-serif',
-  fontSize: 12,
-  color: colors.black,
-};
-
 export default compose(
   pure,
+  map(
+    restyle(
+      [
+        'alt',
+        'name',
+        'isPathAdd',
+        'isLastPathAdd',
+        'isPathSort',
+        'isSiblingSort',
+        'isPathRemove',
+        'isChildRemove',
+      ],
+      (
+        alt,
+        name,
+        isPathAdd,
+        isLastPathAdd,
+        isPathSort,
+        isSiblingSort,
+        isPathRemove,
+        isChildRemove,
+      ) => [
+        [
+          'mergeKeys',
+          {
+            header: true,
+            alt,
+            empty: name === '',
+            sort: isPathSort || isSiblingSort,
+            remove: isPathRemove || isChildRemove,
+            active:
+              isPathAdd ||
+              isLastPathAdd ||
+              isPathSort ||
+              isSiblingSort ||
+              isPathRemove ||
+              isChildRemove,
+          },
+        ],
+      ],
+    ),
+    restyle(
+      ['name', 'path', 'span', 'firstCol', 'lastCol'],
+      (name, path, span, firstCol, lastCol) => ({
+        base: null,
+        td: [
+          [
+            'scale',
+            {
+              paddingTop: {
+                paddingTop: 1,
+                borderTopWidth: span || name.startsWith('#') ? -1 : 0,
+              },
+              paddingLeft: {
+                paddingLeft: 1,
+                borderLeftWidth: span ? 1 : 0,
+              },
+              borderTopWidth: span || name.startsWith('#') ? 2 : 1,
+              borderRightWidth: !lastCol && name === '#2' ? 1 : 0,
+              borderBottomWidth: !span ? 2 : 0,
+              borderLeftWidth:
+                (!firstCol && (name === '#1' ? 2 : !span && 1)) || 0,
+              ...(name === '' && path.indexOf('.') === -1
+                ? {
+                    borderTopWidth: 2,
+                    borderRightWidth: 0,
+                    borderBottomWidth: 0,
+                    borderLeftWidth: 0,
+                  }
+                : {}),
+            },
+          ],
+          ['merge', { position: 'relative', verticalAlign: 'top' }],
+        ],
+        fill: [
+          [
+            'scale',
+            {
+              top: { borderTopWidth: span || name.startsWith('#') ? -2 : -1 },
+              right: {
+                borderRightWidth: (!lastCol && (name === '#2' ? -2 : -1)) || 0,
+              },
+              bottom: { borderBottomWidth: !span ? -2 : -1 },
+              left: {
+                borderLeftWidth:
+                  (!firstCol && (name === '#1' ? -2 : !span && -1)) || 0,
+              },
+            },
+          ],
+          ['filter', 'top', 'right', 'bottom', 'left'],
+          ['merge', { position: 'absolute' }],
+        ],
+        icon: [
+          ['mergeKeys', 'icon'],
+          ['filter', ...css.groups.text, 'background'],
+          [
+            'scale',
+            {
+              fontSize: 0.6,
+              padding: { fontSize: 0.15 },
+              radius: { fontSize: 0.375 },
+            },
+          ],
+          ['merge', { borderRadius: 100 }],
+        ],
+        text: [
+          ['filter', ...css.groups.text],
+          [
+            'merge',
+            {
+              cursor: 'default',
+              position: 'relative',
+              userSelect: 'none',
+              MozUserSelect: 'none',
+              WebkitUserSelect: 'none',
+              msUserSelect: 'none',
+            },
+          ],
+        ],
+      }),
+    ),
+  ),
   branch(
     ({ live }) => !live,
     enclose(({ methods }) => props => ({
@@ -50,7 +166,7 @@ export default compose(
     last,
     firstCol,
     lastCol,
-    alt,
+    text,
     live,
     focused,
     isPathAdd,
@@ -61,66 +177,27 @@ export default compose(
     isChildRemove,
     isPathPaging,
     isPathFilter,
-    color,
     setWidthElem,
     width,
+    style,
   }) => (
     <td
-      style={{
-        position: 'relative',
-        verticalAlign: 'top',
-        background:
-          name === '' && isPathAdd ? colors.blue : alt ? '#e0e0e0' : '#eee',
-        paddingTop: span || name.startsWith('#') ? 9 : 10,
-        paddingRight: 10,
-        paddingBottom: 10,
-        paddingLeft: span ? 11 : 10,
-        borderTopWidth: span || name.startsWith('#') ? 2 : 1,
-        borderRightWidth: !lastCol && name === '#2' && 1,
-        borderBottomWidth: !span && 2,
-        borderLeftWidth: !firstCol && (name === '#1' ? 2 : !span && 1),
-        ...(name === '' && path.indexOf('.') === -1
-          ? {
-              borderTopWidth: 2,
-              borderRightWidth: 0,
-              borderBottomWidth: 0,
-              borderLeftWidth: 0,
-            }
-          : {}),
-        borderStyle: 'solid',
-        borderColor: '#ccc',
-        ...(live && !span ? { minWidth: width } : {}),
-      }}
+      style={{ ...style.td, ...(live && !span ? { minWidth: width } : {}) }}
       colSpan={span || 1}
       rowSpan={rowSpan}
+      ref={!span ? setWidthElem : undefined}
     >
-      <div
-        style={{
-          position: 'absolute',
-          left: (!firstCol && (name === '#1' ? -2 : !span && -1)) || 0,
-          right: !lastCol && name === '#2' ? -1 : 0,
-        }}
-        ref={!span ? setWidthElem : undefined}
-      />
       {live && (
-        <div
-          style={{
-            position: 'absolute',
-            top: span || name.startsWith('#') ? -2 : -1,
-            right: !lastCol && name === '#2' ? -2 : -1,
-            bottom: !span ? -2 : -1,
-            left: !firstCol && name === '#1' ? -2 : -1,
-          }}
-        >
+        <div style={style.fill}>
           {span && (
             <div
               style={{
                 position: 'absolute',
-                top: 2,
+                top: style.base.borderTopWidth * 2,
                 right: 0,
-                bottom: 1,
-                width: 1,
-                background: alt ? '#e0e0e0' : '#eee',
+                bottom: style.base.borderBottomWidth,
+                width: style.base.borderLeftWidth,
+                background: style.td.background,
                 zIndex: 1,
               }}
             />
@@ -132,7 +209,9 @@ export default compose(
                 style={{
                   position: 'absolute',
                   top: 0,
-                  ...(name ? { width: 1 } : { right: 0 }),
+                  ...(name
+                    ? { width: style.base.borderLeftWidth }
+                    : { right: 0 }),
                   bottom: 0,
                   left: 0,
                   zIndex: name ? 20 : 5,
@@ -146,6 +225,7 @@ export default compose(
                   active={isPathAdd}
                   focused={isPathAdd && focused}
                   empty={name === ''}
+                  style={style}
                 />
               </div>
             )}
@@ -157,7 +237,7 @@ export default compose(
                   top: 0,
                   bottom: 0,
                   right: 0,
-                  width: 1,
+                  width: style.base.borderRightWidth,
                   zIndex: 20,
                 }}
               >
@@ -167,6 +247,7 @@ export default compose(
                   path={last}
                   active={isLastPathAdd}
                   focused={isLastPathAdd && focused}
+                  style={style}
                 />
               </div>
             )}
@@ -174,11 +255,11 @@ export default compose(
             <div
               style={{
                 position: 'absolute',
-                top: -1,
+                top: -style.base.borderTopWidth,
                 left: 0,
                 right: 0,
-                height: 3,
-                background: colors.blue,
+                height: style.base.borderLeftWidth * 3,
+                background: style.icon.background,
                 zIndex: 10,
               }}
             />
@@ -203,6 +284,7 @@ export default compose(
                   path={path}
                   active={isPathSort}
                   activeSibling={isSiblingSort}
+                  style={style}
                 />
               </div>
             )}
@@ -214,8 +296,8 @@ export default compose(
                   right: 0,
                   bottom: 0,
                   left: 0,
-                  height: 3,
-                  background: colors.red,
+                  height: style.base.borderBottomWidth * 3,
+                  background: style.icon.background,
                   zIndex: 1,
                 }}
               />
@@ -227,10 +309,10 @@ export default compose(
                   position: 'absolute',
                   ...(span
                     ? {
-                        left: -10,
-                        right: -10,
-                        top: path.indexOf('.') === -1 ? -2 : -2,
-                        bottom: 6,
+                        left: -style.base.paddingLeft,
+                        right: -style.base.paddingRight,
+                        top: -style.icon.radius,
+                        bottom: style.base.borderTopWidth + style.icon.radius,
                       }
                     : { left: 0, right: 0, bottom: 0, height: '50%' }),
                   zIndex: span ? 4 : 10,
@@ -241,11 +323,13 @@ export default compose(
                   relation={span}
                   path={path}
                   active={isPathRemove}
+                  style={style}
                 />
               </div>
             )}
         </div>
       )}
+
       {name === '#1' && (
         <PageField
           context={context}
@@ -253,39 +337,15 @@ export default compose(
           path={path}
           active={isPathPaging}
           focused={isPathPaging && focused}
+          style={style}
         />
       )}
       {!name.startsWith('#') && (
-        <Div style={{ spacing: 15, layout: 'bar' }}>
+        <Div style={{ spacing: style.base.paddingRight * 1.5, layout: 'bar' }}>
           {name === '' && path !== '0' && path.indexOf('.') === -1 ? (
-            <Icon
-              {...icons.plus}
-              style={{
-                ...textStyle,
-                color: isPathAdd ? colors.white : colors.blue,
-              }}
-            />
+            <Icon {...icons.plus} style={style.text} />
           ) : (
-            <Txt
-              style={{
-                ...textStyle,
-                fontWeight: 'bold',
-                color:
-                  name === ''
-                    ? isPathAdd ? colors.white : colors.blue
-                    : color,
-                cursor: 'default',
-                position: 'relative',
-                userSelect: 'none',
-                MozUserSelect: 'none',
-                WebkitUserSelect: 'none',
-                msUserSelect: 'none',
-              }}
-            >
-              {name === ''
-                ? path === '0' ? 'Explore' : 'Add field'
-                : context.getFieldName(context.types, type, name)}
-            </Txt>
+            <Txt style={style.text}>{text}</Txt>
           )}
           {span && (
             <FilterField
@@ -295,6 +355,7 @@ export default compose(
               path={path}
               active={isPathFilter}
               focused={isPathFilter && focused}
+              style={style}
             />
           )}
         </Div>

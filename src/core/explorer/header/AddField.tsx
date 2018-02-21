@@ -5,18 +5,14 @@ import {
   compose,
   enclose,
   fitScreen,
+  map,
   renderLifted,
+  restyle,
   withHover,
 } from 'mishmash';
 import { root } from 'common';
 
-import { colors, icons } from '../../styles';
-
-const textStyle = {
-  fontFamily: 'Ubuntu, sans-serif',
-  fontSize: 12,
-  color: colors.black,
-};
+import icons from '../icons';
 
 const Item = compose(
   enclose(({ methods }) => props => ({
@@ -24,28 +20,26 @@ const Item = compose(
     ...methods({ onClick: () => props.onClick(props.field) }),
   })),
   withHover,
-)(({ context, type, field, relation, onClick, hoverProps, isHovered }) => (
-  <Txt
-    onClick={onClick}
-    {...hoverProps}
-    style={{
-      ...textStyle,
-      fontWeight: relation ? 'bold' : 'normal',
-      padding: '7px 14px',
-      cursor: 'pointer',
-      ...(isHovered
-        ? {
-            background: colors.blue,
-            color: colors.white,
-          }
-        : {}),
-    }}
-  >
-    {context.getFieldName(context.types, type, field)}
+  map(
+    restyle(['relation', 'isHovered'], (relation, isHovered) => [
+      ['mergeKeys', { item: true, relation, hover: isHovered }],
+      ['merge', { border: 'none', cursor: 'pointer' }],
+    ]),
+  ),
+)(({ context, type, field, onClick, hoverProps, style }) => (
+  <Txt onClick={onClick} {...hoverProps} style={style}>
+    {type ? context.config.fieldName(field, type) : context.types[field]}
   </Txt>
 ));
 
 export default compose(
+  map(
+    restyle({
+      base: {
+        modal: [['mergeKeys', 'modal'], ['filter', 'background', 'padding']],
+      },
+    }),
+  ),
   enclose(({ methods }) => ({ path, ...props }) => ({
     ...props,
     ...methods({
@@ -77,6 +71,7 @@ export default compose(
         setInnerElem,
         fitStyle,
         fitSmall,
+        style,
       }) => (
         <div>
           <div
@@ -101,7 +96,7 @@ export default compose(
             ref={setClickElem}
           >
             <div ref={setInnerElem}>
-              <Div style={{ background: 'white', padding: '4px 0' }}>
+              <Div style={style.modal}>
                 {(type
                   ? ['id', ...Object.keys(root.rgo.schema[type])]
                   : Object.keys(context.types)
@@ -115,6 +110,7 @@ export default compose(
                       (!type || (root.rgo.schema[type][f] as any).type)
                     }
                     onClick={onClickItem}
+                    style={style.base}
                     key={i}
                   />
                 ))}
@@ -136,6 +132,7 @@ export default compose(
     onMouseLeave,
     onClick,
     empty,
+    style,
   }) => (
     <>
       {(active || focused) && (
@@ -144,9 +141,19 @@ export default compose(
             style={{
               position: 'absolute',
               ...(wide
-                ? { right: 0, bottom: 0, left: 0, height: 3 }
-                : { top: 0, left: -1, bottom: 0, width: 3 }),
-              background: !empty && colors.blue,
+                ? {
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    height: style.base.borderBottomWidth * 3,
+                  }
+                : {
+                    top: 0,
+                    left: -style.base.borderLeftWidth,
+                    bottom: 0,
+                    width: style.base.borderLeftWidth * 3,
+                  }),
+              background: !empty && style.icon.background,
             }}
             ref={setLiftBaseElem}
           />
@@ -154,15 +161,19 @@ export default compose(
             <Icon
               {...icons.plus}
               style={{
-                fontSize: 7,
-                background: colors.blue,
-                color: 'white',
-                borderRadius: 10,
-                padding: 2,
+                ...style.icon,
                 position: 'absolute',
                 ...(wide
-                  ? { left: '50%', marginLeft: -6, bottom: 1 }
-                  : { top: '50%', left: -5, marginTop: -6 }),
+                  ? {
+                      left: '50%',
+                      marginLeft: -style.icon.radius,
+                      bottom: style.base.borderBottomWidth,
+                    }
+                  : {
+                      bottom: '50%',
+                      left: -style.icon.radius,
+                      marginBottom: -style.icon.radius,
+                    }),
               }}
             />
           )}
@@ -174,9 +185,9 @@ export default compose(
         onClick={onClick}
         style={{
           position: 'absolute',
-          top: -5,
-          left: wide ? 0 : -10,
-          right: wide ? 0 : -10,
+          top: -style.icon.radius,
+          left: wide ? 0 : -style.base.paddingLeft,
+          right: wide ? 0 : -style.base.paddingRight,
           bottom: 0,
           cursor: 'pointer',
           // background: 'rgba(0,255,0,0.1)',
