@@ -10,8 +10,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": false,
-    "downlevelIteration": true,
-    "noImplicitThis": false
+    "noImplicitThis": false,
+    "downlevelIteration": true
   },
-  "include": ["./src/**/*", "./typings.d.ts"]
+  "include": ["./src/**/*"]
 }

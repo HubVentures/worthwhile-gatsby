@@ -78,7 +78,7 @@ const textStyle = {
   color: colors.black,
 };
 
-const buttonStyle = isHovered => ({
+const buttonStyle = {
   ...textStyle,
   fontSize: 28,
   textAlign: 'center',
@@ -91,8 +91,9 @@ const buttonStyle = isHovered => ({
   userSelect: 'none',
   cursor: 'pointer',
   borderRadius: 3,
-  background: isHovered ? colors.blueDark : colors.blue,
-});
+  background: colors.blue,
+  hover: { background: colors.blueDark },
+};
 
 const fieldStyle = {
   ...textStyle,
