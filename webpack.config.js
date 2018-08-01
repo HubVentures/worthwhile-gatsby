@@ -1,13 +1,15 @@
-const path = require('path');
-const webpack = require('webpack');
-
 const app = 'apply';
 const liveData = false;
 
+const path = require('path');
+const webpack = require('webpack');
+
 module.exports = {
-  entry: './src/index.tsx',
+  entry: `./src/apps/${app}`,
   output: {
-    filename: process.env.WEBPACK_SERVE ? 'bundle.js' : `${app}.js`,
+    filename: process.env.WEBPACK_SERVE
+      ? 'bundle.js'
+      : `${app}-${Date.now()}.js`,
     path: path.resolve(__dirname, 'dist'),
   },
   devtool: 'source-map',
